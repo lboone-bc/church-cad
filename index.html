@@ -12,22 +12,24 @@
 
   <style>
     :root {
-      --cad-bg:        #0d0f12;
-      --cad-panel:     #13161c;
-      --cad-border:    #252830;
-      --cad-header:    #1a1d24;
-      --cad-p1:        #dc2626; /* Priority 1 - red   */
-      --cad-p2:        #d97706; /* Priority 2 - orange */
-      --cad-p3:        #2563eb; /* Priority 3 - blue   */
-      --cad-p4:        #4b5563; /* Priority 4 - gray   */
-      --cad-text:      #e2e8f0;
-      --cad-muted:     #64748b;
-      --cad-accent:    #38bdf8;
-      --unit-avail:    #16a34a;
-      --unit-assigned: #d97706;
-      --unit-scene:    #dc2626;
-      --unit-unavail:  #374151;
-      --topbar-h:      48px;
+      /* PremierOne-inspired palette */
+      --cad-bg:        #1e2328;
+      --cad-panel:     #252b32;
+      --cad-border:    #3a4149;
+      --cad-header:    #1a3a5c;
+      --cad-p1:        #cc2222;
+      --cad-p2:        #cc7700;
+      --cad-p3:        #1a6fb5;
+      --cad-p4:        #4a5568;
+      --cad-text:      #d8dde3;
+      --cad-muted:     #7a8694;
+      --cad-accent:    #4a9fd4;
+      --cad-accent2:   #2a6496;
+      --unit-avail:    #2e7d32;
+      --unit-assigned: #cc7700;
+      --unit-scene:    #cc2222;
+      --unit-unavail:  #3a4149;
+      --topbar-h:      44px;
       --bottom-h:      148px;
     }
 
@@ -38,66 +40,69 @@
       margin: 0;
       background: var(--cad-bg);
       color: var(--cad-text);
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 13px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 12px;
       overflow: hidden;
     }
 
     /* ── TOP BAR ── */
     #topbar {
       height: var(--topbar-h);
-      background: var(--cad-header);
-      border-bottom: 1px solid var(--cad-border);
+      background: linear-gradient(180deg, #1c4a78 0%, #0f2d4a 100%);
+      border-bottom: 2px solid #0a1e30;
       display: flex;
       align-items: center;
-      padding: 0 12px;
-      gap: 12px;
+      padding: 0 10px;
+      gap: 8px;
       position: fixed;
       top: 0; left: 0; right: 0;
       z-index: 100;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
     }
     #topbar .brand {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
-      color: var(--cad-accent);
-      letter-spacing: 2px;
+      color: #fff;
+      letter-spacing: 1px;
       text-transform: uppercase;
       white-space: nowrap;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
     }
     #topbar .campus-select {
-      background: var(--cad-panel);
-      border: 1px solid var(--cad-border);
-      color: var(--cad-text);
+      background: #0f2d4a;
+      border: 1px solid #2a5a8a;
+      color: #d0e8ff;
       padding: 3px 8px;
-      border-radius: 3px;
+      border-radius: 2px;
       font-family: inherit;
-      font-size: 12px;
+      font-size: 11px;
     }
     #topbar .stat-pill {
-      background: var(--cad-panel);
-      border: 1px solid var(--cad-border);
-      border-radius: 3px;
-      padding: 3px 10px;
-      font-size: 12px;
-      color: var(--cad-muted);
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 2px;
+      padding: 2px 8px;
+      font-size: 11px;
+      color: #aac8e8;
       white-space: nowrap;
     }
     #topbar .stat-pill span {
-      color: var(--cad-text);
+      color: #fff;
       font-weight: 700;
     }
     #clock {
       margin-left: auto;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
-      color: var(--cad-accent);
-      letter-spacing: 2px;
+      color: #fff;
+      letter-spacing: 1px;
       white-space: nowrap;
+      font-family: 'Courier New', monospace;
     }
     #conn-badge {
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 3px;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 2px;
       white-space: nowrap;
     }
 
@@ -125,18 +130,19 @@
     .cad-panel:last-child { border-right: none; }
 
     .panel-header {
-      background: var(--cad-header);
-      border-bottom: 1px solid var(--cad-border);
-      padding: 6px 10px;
-      font-size: 11px;
+      background: linear-gradient(180deg, #1c4a78 0%, #0f2d4a 100%);
+      border-bottom: 2px solid #0a1e30;
+      padding: 5px 8px;
+      font-size: 10px;
       font-weight: 700;
-      letter-spacing: 1.5px;
+      letter-spacing: 1px;
       text-transform: uppercase;
-      color: var(--cad-muted);
+      color: #a8d0f0;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       flex-shrink: 0;
+      min-height: 26px;
     }
     .panel-body {
       flex: 1;
@@ -150,43 +156,47 @@
 
     /* ── INCIDENT QUEUE (LEFT) ── */
     .incident-card {
-      border: 1px solid var(--cad-border);
-      border-left: 4px solid var(--cad-p3);
-      border-radius: 3px;
-      padding: 7px 9px;
-      margin-bottom: 6px;
+      border-bottom: 1px solid var(--cad-border);
+      border-left: 3px solid var(--cad-p3);
+      padding: 5px 7px;
+      margin-bottom: 0;
       cursor: pointer;
-      transition: background 0.12s;
-      background: var(--cad-bg);
+      transition: background 0.08s;
+      background: var(--cad-panel);
+      font-size: 11px;
     }
-    .incident-card:hover { background: #1a1d24; }
-    .incident-card.active { background: #1a2433; border-left-color: var(--cad-accent); }
+    .incident-card:hover { background: #2e3640; }
+    .incident-card.active { background: #1a3a5a; border-left-color: #5ab0e8; }
     .incident-card.p1 { border-left-color: var(--cad-p1); }
     .incident-card.p2 { border-left-color: var(--cad-p2); }
     .incident-card.p3 { border-left-color: var(--cad-p3); }
     .incident-card.p4 { border-left-color: var(--cad-p4); }
 
+    /* P1 blink */
+    .incident-card.p1.active { animation: p1blink 1.2s step-start infinite; }
+    @keyframes p1blink { 50% { background: #3a1010; } }
+
     .inc-meta {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 3px;
+      margin-bottom: 1px;
     }
-    .inc-number { font-size: 10px; color: var(--cad-muted); }
+    .inc-number { font-size: 10px; color: var(--cad-muted); font-family: 'Courier New', monospace; }
     .priority-badge {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 700;
-      padding: 1px 5px;
-      border-radius: 2px;
+      padding: 1px 4px;
+      border-radius: 1px;
     }
     .p1 .priority-badge { background: var(--cad-p1); color: #fff; }
     .p2 .priority-badge { background: var(--cad-p2); color: #fff; }
     .p3 .priority-badge { background: var(--cad-p3); color: #fff; }
     .p4 .priority-badge { background: var(--cad-p4); color: #9ca3af; }
 
-    .inc-type { font-size: 13px; font-weight: 700; color: var(--cad-text); }
-    .inc-location { font-size: 11px; color: var(--cad-muted); margin-top: 2px; }
-    .inc-time { font-size: 10px; color: var(--cad-muted); }
+    .inc-type { font-size: 12px; font-weight: 700; color: var(--cad-text); }
+    .inc-location { font-size: 10px; color: var(--cad-muted); margin-top: 1px; }
+    .inc-time { font-size: 10px; color: var(--cad-muted); font-family: 'Courier New', monospace; }
 
     /* ── MAP PANEL (CENTER) ── */
     #map-container {
@@ -430,8 +440,8 @@
       background: var(--cad-bg);
       border: 1px solid var(--cad-border);
       color: var(--cad-text);
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 13px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 12px;
       width: 100%;
       padding: 6px 9px;
       border-radius: 3px;
@@ -572,6 +582,195 @@
     .passcode-digit{width:52px;height:52px;background:var(--cad-bg);border:1px solid var(--cad-border);color:var(--cad-text);font-family:inherit;font-size:22px;font-weight:700;text-align:center;border-radius:4px;}
     .passcode-digit:focus{outline:none;border-color:var(--cad-accent);}
     #cad-board{display:none;}
+
+    /* ── DETAIL PANEL TABS ── */
+    .detail-tabs {
+      display: flex;
+      background: #151b22;
+      border-bottom: 2px solid #0a1e30;
+      flex-shrink: 0;
+    }
+    .detail-tab {
+      padding: 5px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #6a8aaa;
+      cursor: pointer;
+      border-right: 1px solid #0a1e30;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.1s, background 0.1s;
+      letter-spacing: 0.5px;
+      user-select: none;
+    }
+    .detail-tab:hover { background: #1e2a38; color: #a8c8e8; }
+    .detail-tab.active { background: var(--cad-panel); color: #fff; border-bottom-color: var(--cad-accent); }
+    .tab-pane { display: none; flex: 1; overflow-y: auto; padding: 8px; }
+    .tab-pane.active { display: block; }
+    .tab-pane::-webkit-scrollbar { width: 4px; }
+    .tab-pane::-webkit-scrollbar-track { background: var(--cad-panel); }
+    .tab-pane::-webkit-scrollbar-thumb { background: var(--cad-border); }
+
+    /* ── DETAIL FIELDS ── */
+    .detail-field { margin-bottom: 8px; }
+    .detail-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #5a8aaa;
+      margin-bottom: 2px;
+      font-weight: 600;
+    }
+    .detail-value {
+      font-size: 12px;
+      color: var(--cad-text);
+      background: #1a2030;
+      border: 1px solid var(--cad-border);
+      border-radius: 2px;
+      padding: 4px 7px;
+      min-height: 24px;
+    }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    /* ── LOG ENTRIES ── */
+    #log-list { list-style: none; padding: 0; margin: 0; }
+    .log-entry {
+      border-left: 2px solid var(--cad-border);
+      padding: 3px 8px;
+      margin-bottom: 5px;
+      font-size: 11px;
+    }
+    .log-entry .log-time { font-size: 10px; color: var(--cad-accent); font-weight: 700; font-family: 'Courier New', monospace; }
+    .log-entry .log-text { color: var(--cad-text); }
+    .log-entry .log-by { font-size: 10px; color: var(--cad-muted); }
+    #log-input-row {
+      display: flex; gap: 6px; padding: 6px 8px;
+      border-top: 1px solid var(--cad-border);
+      flex-shrink: 0; background: #151b22;
+    }
+    #log-input {
+      flex: 1; background: #1a2030; border: 1px solid var(--cad-border);
+      color: var(--cad-text); font-family: inherit; font-size: 11px;
+      padding: 4px 7px; border-radius: 2px;
+    }
+    #log-input:focus { outline: none; border-color: var(--cad-accent); }
+    #log-submit {
+      background: var(--cad-accent2); border: 1px solid var(--cad-accent);
+      color: #fff; font-family: inherit; font-size: 10px; font-weight: 700;
+      padding: 4px 10px; border-radius: 2px; cursor: pointer;
+    }
+
+    /* ── HISTORY TABLE ── */
+    .history-filter-row {
+      display: flex; gap: 6px; margin-bottom: 8px; align-items: center;
+    }
+    .history-filter-row input, .history-filter-row select {
+      background: #1a2030; border: 1px solid var(--cad-border);
+      color: var(--cad-text); font-family: inherit; font-size: 11px;
+      padding: 3px 7px; border-radius: 2px; flex: 1;
+    }
+    .history-filter-row input:focus, .history-filter-row select:focus { outline: none; border-color: var(--cad-accent); }
+    .history-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .history-table thead th {
+      background: #1a3a5c; color: #a8d0f0; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      padding: 4px 6px; border-bottom: 1px solid #0a1e30; text-align: left;
+      white-space: nowrap;
+    }
+    .history-table tbody tr { border-bottom: 1px solid var(--cad-border); cursor: pointer; }
+    .history-table tbody tr:hover { background: #2e3640; }
+    .history-table tbody td { padding: 4px 6px; color: var(--cad-text); vertical-align: middle; }
+    .history-table .h-num { font-family: 'Courier New', monospace; font-size: 10px; color: var(--cad-muted); }
+    .history-table .h-pri { font-weight: 700; font-size: 10px; }
+    .history-table .h-type { font-weight: 600; }
+    .history-table .h-loc { color: var(--cad-muted); font-size: 10px; }
+    .history-table .h-time { font-family: 'Courier New', monospace; font-size: 10px; color: var(--cad-muted); white-space: nowrap; }
+    .history-table .h-status { font-size: 10px; padding: 1px 5px; border-radius: 2px; font-weight: 700; }
+    .h-status.closed { background: #1a3a1a; color: #4ade80; }
+    .h-status.active { background: #3a1a1a; color: #f87171; }
+    .hist-p1 { color: var(--cad-p1); }
+    .hist-p2 { color: var(--cad-p2); }
+    .hist-p3 { color: var(--cad-p3); }
+    .hist-p4 { color: var(--cad-muted); }
+    .history-detail-row { display: none; background: #1a2030; }
+    .history-detail-row.open { display: table-row; }
+    .history-detail-row td { padding: 6px 10px; font-size: 11px; color: var(--cad-muted); border-bottom: 1px solid var(--cad-border); }
+
+    /* ── MODAL / BUTTON UPDATES ── */
+    .cad-modal-content {
+      background: var(--cad-panel); border: 1px solid #0a1e30;
+      border-radius: 3px; color: var(--cad-text);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 12px;
+    }
+    .cad-modal-header {
+      background: linear-gradient(180deg, #1c4a78 0%, #0f2d4a 100%);
+      border-bottom: 2px solid #0a1e30; padding: 8px 12px;
+      display: flex; align-items: center;
+    }
+    .cad-modal-title { font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 0.5px; text-transform: uppercase; }
+    .cad-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #5a8aaa; margin-bottom: 2px; display: block; font-weight: 600; }
+    .cad-input {
+      background: #1a2030; border: 1px solid var(--cad-border);
+      color: var(--cad-text); font-family: inherit; font-size: 12px;
+      width: 100%; padding: 5px 8px; border-radius: 2px; margin-bottom: 8px;
+    }
+    .cad-input:focus { outline: none; border-color: var(--cad-accent); }
+    .cad-btn-primary {
+      background: linear-gradient(180deg, #2a6aaa 0%, #1a4a7a 100%);
+      color: #fff; border: 1px solid #0a2a4a; font-family: inherit;
+      font-size: 11px; font-weight: 700; padding: 5px 14px;
+      border-radius: 2px; cursor: pointer;
+    }
+    .cad-btn-primary:hover { background: linear-gradient(180deg, #3a7aba 0%, #2a5a8a 100%); }
+    .cad-btn-secondary {
+      background: linear-gradient(180deg, #3a4550 0%, #2a3540 100%);
+      color: #aac0d0; border: 1px solid var(--cad-border);
+      font-family: inherit; font-size: 11px; padding: 5px 12px;
+      border-radius: 2px; cursor: pointer;
+    }
+    .cad-btn-secondary:hover { background: linear-gradient(180deg, #4a5560 0%, #3a4550 100%); color: #d0e0f0; }
+    .cad-btn-danger {
+      background: transparent; color: #f87171;
+      border: 1px solid #cc2222; font-family: inherit;
+      font-size: 11px; padding: 5px 12px; border-radius: 2px; cursor: pointer;
+    }
+    .cad-btn-warn {
+      background: transparent; color: #fbbf24;
+      border: 1px solid #cc7700; font-family: inherit;
+      font-size: 11px; padding: 5px 12px; border-radius: 2px; cursor: pointer;
+    }
+    .svc-toggle button { font-family: inherit; }
+    .svc-toggle button.active { background: var(--cad-accent2); color: #fff; }
+
+    /* unit cards */
+    .unit-card {
+      flex-shrink: 0; width: 128px; background: #1e2530;
+      border: 1px solid var(--cad-border); border-top: 2px solid var(--cad-border);
+      border-radius: 2px; padding: 5px 7px;
+    }
+    .status-available   { border-top-color: var(--unit-avail) !important; }
+    .status-assigned    { border-top-color: var(--unit-assigned) !important; }
+    .status-on_scene    { border-top-color: var(--unit-scene) !important; }
+    .status-unavailable { border-top-color: var(--unit-unavail) !important; opacity: 0.7; }
+
+    /* bottom bar */
+    #bottom-bar { background: #151b22; border-top: 2px solid #0a1e30; }
+    #bottom-bar .bar-header {
+      background: linear-gradient(180deg, #1c4a78 0%, #0f2d4a 100%);
+      border-bottom: 2px solid #0a1e30; padding: 4px 10px;
+      font-size: 10px; color: #a8d0f0;
+    }
+
+    /* roster rows */
+    .roster-row { background: #1a2030; }
+
+    /* divider */
+    .divider-label {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+      color: #5a8aaa; border-bottom: 1px solid var(--cad-border);
+      padding-bottom: 3px; margin: 8px 0 6px; font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -700,19 +899,46 @@
   <div class="cad-panel">
     <div class="panel-header">
       <i class="bi bi-file-text"></i> Incident Detail
-      <span id="detail-inc-number" style="color:var(--cad-text); font-weight:400; margin-left:6px; font-size:11px;"></span>
-      <div id="detail-action-btns" style="margin-left:auto; display:none; gap:6px;">
-        <button class="cad-btn-danger" style="padding:2px 8px; font-size:10px;" onclick="closeSelectedIncident()">Close</button>
+      <span id="detail-inc-number" style="color:#fff; font-weight:700; margin-left:6px; font-size:11px; font-family:'Courier New',monospace;"></span>
+      <div id="detail-action-btns" style="margin-left:auto; display:none; gap:6px; align-items:center;">
+        <button class="cad-btn-danger" style="padding:2px 8px; font-size:10px;" onclick="closeSelectedIncident()"><i class="bi bi-x-circle me-1"></i>Close</button>
       </div>
     </div>
-    <div class="panel-body" id="detail-body">
-      <div class="detail-empty">
+    <!-- TABS -->
+    <div class="detail-tabs" id="detail-tab-bar">
+      <div class="detail-tab active" id="tab-general" onclick="switchDetailTab('general')">General</div>
+      <div class="detail-tab" id="tab-log" onclick="switchDetailTab('log')">Log</div>
+      <div class="detail-tab" id="tab-history" onclick="switchDetailTab('history')">History</div>
+    </div>
+    <!-- GENERAL TAB -->
+    <div class="tab-pane active" id="pane-general" id="detail-body">
+      <div class="detail-empty" id="detail-empty-msg">
         <i class="bi bi-arrow-left-circle" style="font-size:32px; color:var(--cad-border); display:block; margin-bottom:8px;"></i>
         <span style="color:var(--cad-muted); font-size:12px;">Select an incident from the queue</span>
       </div>
     </div>
+    <!-- LOG TAB -->
+    <div class="tab-pane" id="pane-log">
+      <ul id="log-list"></ul>
+    </div>
+    <!-- HISTORY TAB -->
+    <div class="tab-pane" id="pane-history">
+      <div class="history-filter-row">
+        <input type="text" id="hist-search" placeholder="Search incidents..." oninput="filterHistory()" />
+        <select id="hist-campus-filter" onchange="filterHistory()">
+          <option value="">All Campuses</option>
+        </select>
+      </div>
+      <div id="history-table-wrap">
+        <div class="detail-empty" style="margin-top:20px;">
+          <i class="bi bi-clock-history" style="font-size:32px; color:var(--cad-border); display:block; margin-bottom:8px;"></i>
+          <span style="color:var(--cad-muted); font-size:12px;">No history loaded</span>
+        </div>
+      </div>
+    </div>
+    <!-- LOG INPUT (shown on Log tab) -->
     <div id="log-input-row" style="display:none;">
-      <input type="text" id="log-input" placeholder="Add log entry..." onkeydown="if(event.key==='Enter') submitLogEntry()" />
+      <input type="text" id="log-input" placeholder="Add narrative entry..." onkeydown="if(event.key==='Enter') submitLogEntry()" />
       <button id="log-submit" onclick="submitLogEntry()">ADD</button>
     </div>
   </div>
@@ -725,7 +951,10 @@
 <div id="bottom-bar">
   <div class="bar-header">
     <i class="bi bi-people-fill"></i> Unit Status Board
-    <span id="unit-campus-label" style="color:var(--cad-text); font-weight:400; font-size:11px;"></span>
+    <span id="unit-campus-label" style="color:#fff; font-weight:400; font-size:11px;"></span>
+    <span id="svc-day-tag" class="svc-day-tag tag-sun ms-1">SUNDAY</span>
+    <button id="btn-load-roster" class="cad-btn-primary ms-2" style="padding:2px 10px; font-size:10px; display:none;" onclick="loadRoster()"><i class="bi bi-people-fill me-1"></i>Load Roster</button>
+    <button id="btn-clear-service" class="cad-btn-warn ms-1" style="padding:2px 10px; font-size:10px; display:none;" onclick="confirmClearService()"><i class="bi bi-stop-circle me-1"></i>Clear Service</button>
     <button class="cad-btn-secondary ms-auto" style="padding:2px 8px; font-size:10px;" onclick="openAddUnit()">
       <i class="bi bi-plus"></i> Add Unit
     </button>
@@ -1618,6 +1847,88 @@ function renderPins() {
 /* ══════════════════════════════════
    STATS BAR
 ══════════════════════════════════ */
+/* ════════════════════════════════════════════════
+   DETAIL TABS
+════════════════════════════════════════════════ */
+function switchDetailTab(tab) {
+  ['general','log','history'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+    document.getElementById('pane-'+t).classList.toggle('active', t===tab);
+  });
+  document.getElementById('log-input-row').style.display =
+    (tab==='log' && state.selectedIncident) ? 'flex' : 'none';
+  if (tab==='history') loadHistory();
+}
+
+/* ════════════════════════════════════════════════
+   INCIDENT HISTORY
+════════════════════════════════════════════════ */
+let historyData = [];
+let historyExpanded = {};
+
+async function loadHistory() {
+  const wrap = document.getElementById('history-table-wrap');
+  wrap.innerHTML = '<div style="color:var(--cad-muted);font-size:11px;padding:8px;">Loading...</div>';
+  const cf = document.getElementById('hist-campus-filter');
+  cf.innerHTML = '<option value="">All Campuses</option>';
+  state.campuses.forEach(c => { cf.innerHTML += `<option value="${c.id}">${escHtml(c.name)}</option>`; });
+  const { data, error } = await db.from('incidents').select('*').order('created_at', { ascending: false }).limit(200);
+  if (error) { wrap.innerHTML = `<div style="color:var(--cad-p1);font-size:11px;padding:8px;">Error: ${escHtml(error.message)}</div>`; return; }
+  historyData = data || [];
+  historyExpanded = {};
+  renderHistoryTable(historyData);
+}
+
+function filterHistory() {
+  const q = document.getElementById('hist-search').value.toLowerCase();
+  const cid = document.getElementById('hist-campus-filter').value;
+  let filtered = historyData;
+  if (cid) filtered = filtered.filter(i => String(i.campus_id) === cid);
+  if (q) filtered = filtered.filter(i =>
+    (i.incident_number||'').toLowerCase().includes(q) ||
+    (i.call_type||'').toLowerCase().includes(q) ||
+    (i.location_description||'').toLowerCase().includes(q)
+  );
+  renderHistoryTable(filtered);
+}
+
+function renderHistoryTable(rows) {
+  const wrap = document.getElementById('history-table-wrap');
+  if (!rows.length) {
+    wrap.innerHTML = '<div class="detail-empty" style="margin-top:20px;"><span style="color:var(--cad-muted);font-size:12px;">No incidents found</span></div>';
+    return;
+  }
+  const pColors = {1:'hist-p1',2:'hist-p2',3:'hist-p3',4:'hist-p4'};
+  wrap.innerHTML = `
+    <table class="history-table">
+      <thead><tr><th>#</th><th>Pri</th><th>Type</th><th>Location</th><th>Campus</th><th>Date/Time</th><th>Status</th></tr></thead>
+      <tbody>${rows.map(inc => {
+        const campus = state.campuses.find(c => c.id === inc.campus_id);
+        const dt = new Date(inc.created_at);
+        const dtStr = dt.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'})+' '+dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
+        return `
+          <tr onclick="toggleHistoryRow(${inc.id})" style="cursor:pointer;">
+            <td class="h-num">${escHtml(inc.incident_number||'—')}</td>
+            <td class="h-pri ${pColors[inc.priority]||''}">P${inc.priority}</td>
+            <td class="h-type">${escHtml(inc.call_type||'—')}</td>
+            <td class="h-loc">${escHtml((inc.location_description||'—').substring(0,28))}</td>
+            <td class="h-loc">${escHtml(campus?campus.name:'—')}</td>
+            <td class="h-time">${dtStr}</td>
+            <td><span class="h-status ${inc.status||'closed'}">${inc.status||'closed'}</span></td>
+          </tr>
+          <tr class="history-detail-row ${historyExpanded[inc.id]?'open':''}" id="hdr-${inc.id}">
+            <td colspan="7"><strong>Location:</strong> ${escHtml(inc.location_description||'—')}<br>${inc.caller_name?`<strong>Caller:</strong> ${escHtml(inc.caller_name)}${inc.caller_contact?' · '+escHtml(inc.caller_contact):''}<br>`:''}<strong>Opened:</strong> ${new Date(inc.created_at).toLocaleString()}</td>
+          </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+}
+
+function toggleHistoryRow(id) {
+  historyExpanded[id] = !historyExpanded[id];
+  const row = document.getElementById('hdr-'+id);
+  if (row) row.classList.toggle('open', historyExpanded[id]);
+}
+
 function updateStats() {
   const campusId = state.selectedCampus ? state.selectedCampus.id : null;
   const active = campusId ? state.incidents.filter(i => i.campus_id === campusId && i.status === 'active').length : 0;
