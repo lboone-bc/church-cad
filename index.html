@@ -1783,17 +1783,8 @@ function hideMap() {
 function handleMapUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
-
-  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE' && state.selectedCampus) {
-    uploadMapToSupabase(file);
-  } else {
-    // Demo: use local object URL
-    const url = URL.createObjectURL(file);
-    state.mapImageUrl = url;
-    if (state.selectedCampus) state.selectedCampus.map_image_url = url;
-    showMap(url);
-    showAlert('Map loaded (local preview — not saved to database in demo mode).', 'info');
-  }
+  if (!state.selectedCampus) { showAlert('Select a campus before uploading a map.', 'warning'); return; }
+  uploadMapToSupabase(file);
 }
 
 async function uploadMapToSupabase(file) {
