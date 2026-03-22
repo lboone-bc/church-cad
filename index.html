@@ -774,6 +774,135 @@
 
     .unit-remove-btn { float:right; background:none; border:none; color:var(--cad-muted); font-size:11px; cursor:pointer; padding:0; line-height:1; }
     .unit-remove-btn:hover { color:var(--cad-p1); }
+
+    /* ── HISTORY EDIT POPOUT ── */
+    #hist-edit-panel {
+      display: none;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 480px;
+      background: var(--cad-panel);
+      border: 1px solid #0a1e30;
+      border-top: 3px solid var(--cad-accent);
+      border-radius: 4px;
+      z-index: 9990;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #hist-edit-panel.open { display: flex; }
+    #hist-edit-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 9989;
+    }
+    #hist-edit-overlay.open { display: block; }
+    .hedit-header {
+      background: linear-gradient(180deg,#1c4a78 0%,#0f2d4a 100%);
+      border-bottom: 2px solid #0a1e30;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .hedit-body { padding: 14px; overflow-y: auto; flex: 1; }
+    .hedit-field { margin-bottom: 10px; }
+    .hedit-input {
+      width: 100%;
+      background: #1a2030;
+      border: 1px solid var(--cad-border);
+      color: var(--cad-text);
+      font-family: inherit;
+      font-size: 12px;
+      padding: 5px 8px;
+      border-radius: 2px;
+    }
+    .hedit-input:focus { outline: none; border-color: var(--cad-accent); }
+    .hedit-footer {
+      background: #151b22;
+      border-top: 1px solid var(--cad-border);
+      padding: 8px 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .edit-stamp {
+      font-size: 10px;
+      color: #fbbf24;
+      font-family: 'Courier New', monospace;
+      font-style: italic;
+    }
+
+    /* ── CALL TYPE AUTOCOMPLETE ── */
+    .ct-search-wrap { position: relative; margin-bottom: 8px; }
+    #ct-search {
+      width: 100%;
+      background: #1a2030;
+      border: 1px solid var(--cad-border);
+      color: var(--cad-text);
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      padding: 6px 9px;
+      border-radius: 2px;
+    }
+    #ct-search:focus { outline: none; border-color: var(--cad-accent); }
+    #ct-search.has-value { border-color: var(--cad-accent); background: #0f1e30; }
+    #ct-dropdown {
+      display: none;
+      position: absolute;
+      left: 0; right: 0; top: 100%;
+      background: #1a2030;
+      border: 1px solid var(--cad-accent);
+      border-top: none;
+      border-radius: 0 0 2px 2px;
+      max-height: 220px;
+      overflow-y: auto;
+      z-index: 9999;
+    }
+    #ct-dropdown.open { display: block; }
+    .ct-option {
+      padding: 5px 9px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      border-bottom: 1px solid var(--cad-border);
+    }
+    .ct-option:hover, .ct-option.focused { background: #1a3a5a; }
+    .ct-option:last-child { border-bottom: none; }
+    .ct-code {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: var(--cad-accent);
+      font-weight: 700;
+      min-width: 72px;
+    }
+    .ct-desc { color: var(--cad-text); flex: 1; }
+    .ct-pri { font-size: 10px; font-weight: 700; padding: 1px 4px; border-radius: 1px; }
+    .ct-pri-1 { background: var(--cad-p1); color: #fff; }
+    .ct-pri-2 { background: var(--cad-p2); color: #fff; }
+    .ct-pri-3 { background: var(--cad-p3); color: #fff; }
+    .ct-pri-4 { background: var(--cad-p4); color: #aaa; }
+    #ct-hidden { display: none; }
+    .ct-selected-badge {
+      display: none;
+      font-size: 11px;
+      margin-top: 4px;
+      padding: 3px 8px;
+      background: #0f1e30;
+      border: 1px solid var(--cad-accent);
+      border-radius: 2px;
+      color: var(--cad-accent);
+      font-family: 'Courier New', monospace;
+    }
+    .ct-selected-badge.show { display: block; }
   </style>
 </head>
 <body>
@@ -836,6 +965,10 @@
   <select class="campus-select" id="campus-select" onchange="onCampusChange()">
     <option value="">— Select Campus —</option>
   </select>
+    <div class="svc-toggle">
+      <button id="btn-sun" class="active" onclick="setServiceDay('sunday')">SUN</button>
+      <button id="btn-wed" onclick="setServiceDay('wednesday')">WED</button>
+    </div>
 
   <div class="stat-pill">Active Incidents: <span id="stat-active">0</span></div>
   <div class="stat-pill">Units Available: <span id="stat-avail">0</span></div>
@@ -845,6 +978,7 @@
   </button>
 
   <button id="admin-settings-btn" style="display:none;font-size:11px;padding:4px 10px;" class="cad-btn-secondary" onclick="toggleAdminSettings()"><i class="bi bi-gear-fill me-1"></i>Settings</button>
+    <button class="cad-btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="openRosterManager()"><i class="bi bi-people-fill me-1"></i>Roster</button>
   <div id="session-info">
     <span class="role-tag" id="role-display">SOC</span>
     <span style="margin:0 4px;">|</span>
@@ -1021,10 +1155,14 @@
           <option value="">— Select —</option>
         </select>
 
-        <label class="cad-label">Call Type</label>
-        <select class="cad-input" id="inc-calltype" onchange="autoSetPriority()">
-          <option value="">— Select —</option>
-        </select>
+        <label class="cad-label">Call Type <span style="color:var(--cad-muted);font-size:10px;font-weight:400;">— type code or description</span></label>
+        <div class="ct-search-wrap">
+          <input type="text" id="ct-search" autocomplete="off" placeholder="10-40, Fight, SEC-AT…"
+            oninput="ctOnInput()" onkeydown="ctOnKey(event)" onfocus="ctOnFocus()" />
+          <input type="hidden" id="inc-calltype" />
+          <div id="ct-dropdown"></div>
+        </div>
+        <div id="ct-selected-badge" class="ct-selected-badge"></div>
 
         <label class="cad-label">Priority</label>
         <div class="priority-pills">
@@ -1143,6 +1281,80 @@ function tickClock() {
 }
 setInterval(tickClock, 1000);
 tickClock();
+
+const CALL_TYPES_LIST = [
+  {code:'10-13',desc:'Weather Conditions',pri:4,cat:'info'},
+  {code:'10-38',desc:'Assault',pri:1,cat:'law'},
+  {code:'10-38S',desc:'Sexual Assault',pri:1,cat:'law'},
+  {code:'10-40',desc:'Fight',pri:1,cat:'law'},
+  {code:'10-45',desc:'Bomb Threat',pri:1,cat:'priority'},
+  {code:'10-50PD',desc:'Vehicle Accident Property Damage Only',pri:3,cat:'law'},
+  {code:'10-50PI',desc:'Vehicle Accident Personal Injury',pri:2,cat:'law'},
+  {code:'10-55',desc:'Intoxicated Driver',pri:2,cat:'law'},
+  {code:'10-56',desc:'Intoxicated Person',pri:2,cat:'law'},
+  {code:'10-60',desc:'Suspicious',pri:3,cat:'law'},
+  {code:'10-60P',desc:'Suspicious Person',pri:3,cat:'law'},
+  {code:'10-60V',desc:'Suspicious Vehicle',pri:3,cat:'law'},
+  {code:'10-62',desc:'Breaking and Entering',pri:1,cat:'law'},
+  {code:'10-63',desc:'Investigate',pri:3,cat:'law'},
+  {code:'10-63T',desc:'Trespassing',pri:3,cat:'law'},
+  {code:'10-65A',desc:'Armed Robbery',pri:1,cat:'law'},
+  {code:'10-67',desc:'Death',pri:1,cat:'priority'},
+  {code:'10-73',desc:'Mental Subject',pri:2,cat:'law'},
+  {code:'10-79',desc:'Civil Disturbance',pri:2,cat:'law'},
+  {code:'10-80',desc:'Domestic Disturbance',pri:1,cat:'law'},
+  {code:'10-82',desc:'Gun',pri:1,cat:'law'},
+  {code:'10-82D',desc:'Gun Discharge',pri:1,cat:'law'},
+  {code:'10-88',desc:'Fire',pri:1,cat:'priority'},
+  {code:'10-90',desc:'Alarm',pri:2,cat:'law'},
+  {code:'10-94',desc:'Gunshot Wound',pri:1,cat:'medical'},
+  {code:'10-95',desc:'Drugs',pri:2,cat:'law'},
+  {code:'10-109',desc:'Suicide',pri:1,cat:'priority'},
+  {code:'10-112',desc:'Missing Person',pri:2,cat:'law'},
+  {code:'10-112A',desc:'Missing Adult',pri:2,cat:'law'},
+  {code:'10-112J',desc:'Missing Juvenile',pri:1,cat:'law'},
+  {code:'10-122',desc:'Security Check',pri:4,cat:'law'},
+  {code:'GEN-OT',desc:'Other General Incident',pri:4,cat:'general'},
+  {code:'GEN-PV',desc:'Policy Violation',pri:4,cat:'general'},
+  {code:'GEN-SC',desc:'Staff Concern',pri:4,cat:'general'},
+  {code:'GEN-VC',desc:'Visitor Complaint',pri:4,cat:'general'},
+  {code:'GEN-VL',desc:'Volunteer Concern',pri:4,cat:'general'},
+  {code:'MED-AI',desc:'Child Injury',pri:2,cat:'medical'},
+  {code:'MED-AR',desc:'Allergic Reaction',pri:1,cat:'medical'},
+  {code:'MED-FS',desc:'Fall / Slip Injury',pri:2,cat:'medical'},
+  {code:'MED-IL',desc:'Illness',pri:3,cat:'medical'},
+  {code:'MED-MJ',desc:'Major Injury (EMS Required)',pri:1,cat:'medical'},
+  {code:'MED-MN',desc:'Minor Injury (Bandage/Ice)',pri:3,cat:'medical'},
+  {code:'MED-SZ',desc:'Seizure',pri:1,cat:'medical'},
+  {code:'MED-SI',desc:'Staff Injury',pri:2,cat:'medical'},
+  {code:'MED-UP',desc:'Unresponsive Person',pri:1,cat:'medical'},
+  {code:'PRP-BD',desc:'Building Damage',pri:3,cat:'property'},
+  {code:'PRP-DD',desc:'Door / Lock Damage',pri:3,cat:'property'},
+  {code:'PRP-ED',desc:'Equipment Damage',pri:3,cat:'property'},
+  {code:'PRP-EL',desc:'Electrical Damage',pri:2,cat:'property'},
+  {code:'PRP-FA',desc:'Fire Alarm Activation',pri:2,cat:'property'},
+  {code:'PRP-WD',desc:'Water Damage',pri:2,cat:'property'},
+  {code:'SEC-AT',desc:'Active Threat Concern',pri:1,cat:'security'},
+  {code:'SEC-CC',desc:'Custody Concern',pri:2,cat:'security'},
+  {code:'SEC-DA',desc:'Domestic Dispute',pri:2,cat:'security'},
+  {code:'SEC-DC',desc:'Disorderly Conduct',pri:2,cat:'security'},
+  {code:'SEC-LC',desc:'Lost Child / Reunification',pri:2,cat:'security'},
+  {code:'SEC-TF',desc:'Theft',pri:2,cat:'security'},
+  {code:'SEC-UA',desc:'Unauthorized Access',pri:2,cat:'security'},
+  {code:'SEC-UP',desc:'Unauthorized Pickup Attempt',pri:1,cat:'security'},
+  {code:'SEC-VA',desc:'Verbal Altercation',pri:3,cat:'security'},
+  {code:'SEC-VN',desc:'Vandalism',pri:3,cat:'security'},
+  {code:'SEC-VT',desc:'Verbal Threat',pri:2,cat:'security'},
+  {code:'VEH-MV',desc:'Medical in Vehicle',pri:1,cat:'vehicle'},
+  {code:'VEH-PV',desc:'Parking Violation',pri:4,cat:'vehicle'},
+  {code:'VEH-RD',desc:'Reckless Driving',pri:2,cat:'vehicle'},
+  {code:'VEH-TF',desc:'Traffic Flow Issue',pri:4,cat:'vehicle'},
+  {code:'FIR-EV',desc:'Evacuation',pri:1,cat:'fire'},
+  {code:'FIR-GL',desc:'Gas Leak',pri:1,cat:'fire'},
+  {code:'TCH-AC',desc:'Access Control Issue',pri:3,cat:'technology'},
+  {code:'TCH-CI',desc:'Camera Issue',pri:3,cat:'technology'},
+  {code:'TCH-NO',desc:'Network Outage',pri:3,cat:'technology'}
+];
 
 /* ════════════════════════════════════════════════
    LOGIN
@@ -1325,8 +1537,99 @@ async function loadCampuses() {
   const { data, error } = await db.from('campuses').select('*').eq('is_active', true).order('name');
   if (!error) { state.campuses = data; renderCampusDropdowns(); }
 }
-async function loadCallTypes() {
-  const { data, error } = await db.from('call_types').select('*').order('category').order('code');
+
+/* ════════════════════════════════════════════════
+   CALL TYPE AUTOCOMPLETE
+════════════════════════════════════════════════ */
+let ctFocusIdx = -1;
+
+function ctGetMatches(q) {
+  if (!q) return CALL_TYPES_LIST.slice(0, 12);
+  const lq = q.toLowerCase().replace(/[^a-z0-9]/g,'');
+  return CALL_TYPES_LIST.filter(c => {
+    const code = c.code.toLowerCase().replace(/[^a-z0-9]/g,'');
+    const desc = c.desc.toLowerCase().replace(/[^a-z0-9]/g,'');
+    return code.startsWith(lq) || desc.includes(lq) || code.includes(lq);
+  }).slice(0, 12);
+}
+
+function ctRender(matches) {
+  const dd = document.getElementById('ct-dropdown');
+  if (!matches.length) { dd.classList.remove('open'); return; }
+  dd.innerHTML = matches.map((c,i) => `
+    <div class="ct-option" data-code="${c.code}" data-pri="${c.pri}" data-idx="${i}"
+         onmousedown="ctSelect('${c.code}','${c.desc.replace(/'/g,"\'")}',${c.pri})">
+      <span class="ct-code">${c.code}</span>
+      <span class="ct-desc">${c.desc}</span>
+      <span class="ct-pri ct-pri-${c.pri}">P${c.pri}</span>
+    </div>`).join('');
+  dd.classList.add('open');
+  ctFocusIdx = -1;
+}
+
+function ctOnInput() {
+  const q = document.getElementById('ct-search').value.trim();
+  document.getElementById('inc-calltype').value = '';
+  document.getElementById('ct-selected-badge').classList.remove('show');
+  document.getElementById('ct-search').classList.remove('has-value');
+  ctRender(ctGetMatches(q));
+}
+
+function ctOnFocus() {
+  const q = document.getElementById('ct-search').value.trim();
+  ctRender(ctGetMatches(q));
+}
+
+function ctOnKey(e) {
+  const dd = document.getElementById('ct-dropdown');
+  const opts = dd.querySelectorAll('.ct-option');
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    ctFocusIdx = Math.min(ctFocusIdx + 1, opts.length - 1);
+    opts.forEach((o,i) => o.classList.toggle('focused', i === ctFocusIdx));
+    if (opts[ctFocusIdx]) opts[ctFocusIdx].scrollIntoView({block:'nearest'});
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    ctFocusIdx = Math.max(ctFocusIdx - 1, 0);
+    opts.forEach((o,i) => o.classList.toggle('focused', i === ctFocusIdx));
+  } else if (e.key === 'Enter' || e.key === 'Tab') {
+    if (ctFocusIdx >= 0 && opts[ctFocusIdx]) {
+      e.preventDefault();
+      const o = opts[ctFocusIdx];
+      ctSelect(o.dataset.code, o.querySelector('.ct-desc').textContent, parseInt(o.dataset.pri));
+    } else if (opts.length === 1) {
+      e.preventDefault();
+      const o = opts[0];
+      ctSelect(o.dataset.code, o.querySelector('.ct-desc').textContent, parseInt(o.dataset.pri));
+    }
+  } else if (e.key === 'Escape') {
+    dd.classList.remove('open');
+  }
+}
+
+function ctSelect(code, desc, pri) {
+  document.getElementById('ct-search').value = code + ' — ' + desc;
+  document.getElementById('ct-search').classList.add('has-value');
+  document.getElementById('inc-calltype').value = code;
+  document.getElementById('ct-dropdown').classList.remove('open');
+  document.getElementById('ct-selected-badge').textContent = code + ' — ' + desc + ' (P' + pri + ')';
+  document.getElementById('ct-selected-badge').classList.add('show');
+  // Auto-set priority
+  const radio = document.getElementById('p' + pri);
+  if (radio) radio.checked = true;
+  // Move focus to location field
+  setTimeout(() => { const loc = document.getElementById('inc-location'); if (loc) loc.focus(); }, 50);
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('.ct-search-wrap')) {
+    const dd = document.getElementById('ct-dropdown');
+    if (dd) dd.classList.remove('open');
+  }
+});
+
+async function loadCallTypes() { state.callTypes = CALL_TYPES_LIST.map((c,i) => ({id:i+1, ...c, description:c.desc, default_priority:c.pri, category:c.cat})); } = await db.from('call_types').select('*').order('category').order('code');
   if (!error) state.callTypes = data;
 }
 async function loadUnits(campusId) {
@@ -1667,6 +1970,15 @@ async function submitLogEntry() {
 ══════════════════════════════════ */
 function openNewIncident() {
   populateCallTypes();
+  // Reset autocomplete
+  const cs = document.getElementById('ct-search');
+  const cv = document.getElementById('inc-calltype');
+  const cb = document.getElementById('ct-selected-badge');
+  const dd = document.getElementById('ct-dropdown');
+  if (cs) { cs.value = ''; cs.classList.remove('has-value'); }
+  if (cv) cv.value = '';
+  if (cb) cb.classList.remove('show');
+  if (dd) dd.classList.remove('open');
   // pre-select current campus
   if (state.selectedCampus) document.getElementById('inc-campus').value = state.selectedCampus.id;
   document.getElementById('p3').checked = true;
@@ -1674,32 +1986,8 @@ function openNewIncident() {
 }
 
 function populateCallTypes() {
-  const el = document.getElementById('inc-calltype');
-  el.innerHTML = '<option value="">— Select Call Type —</option>';
-  // Group by category if present, otherwise flat list
-  const cats = [...new Set(state.callTypes.map(c => c.category).filter(Boolean))];
-  if (cats.length > 0) {
-    cats.forEach(cat => {
-      const group = document.createElement('optgroup');
-      group.label = cat.toUpperCase();
-      state.callTypes.filter(c => c.category === cat).forEach(ct => {
-        const opt = document.createElement('option');
-        opt.value = ct.code;
-        opt.textContent = `${ct.code} — ${ct.description}`;
-        opt.dataset.priority = ct.default_priority || 3;
-        group.appendChild(opt);
-      });
-      el.appendChild(group);
-    });
-  } else {
-    state.callTypes.forEach(ct => {
-      const opt = document.createElement('option');
-      opt.value = ct.code;
-      opt.textContent = `${ct.code} — ${ct.description}`;
-      opt.dataset.priority = ct.default_priority || 3;
-      el.appendChild(opt);
-    });
-  }
+  // Legacy: populate inc-campus only — call type now uses autocomplete
+  // Nothing to do here for call types
 }
 
 function autoSetPriority() {
@@ -1965,23 +2253,30 @@ function renderHistoryTable(rows) {
   const pColors = {1:'hist-p1',2:'hist-p2',3:'hist-p3',4:'hist-p4'};
   wrap.innerHTML = `
     <table class="history-table">
-      <thead><tr><th>#</th><th>Pri</th><th>Type</th><th>Location</th><th>Campus</th><th>Date/Time</th><th>Status</th></tr></thead>
+      <thead><tr><th>#</th><th>Pri</th><th>Type</th><th>Location</th><th>Campus</th><th>Date/Time</th><th>Status</th><th></th></tr></thead>
       <tbody>${rows.map(inc => {
         const campus = state.campuses.find(c => c.id === inc.campus_id);
         const dt = new Date(inc.created_at);
         const dtStr = dt.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'})+' '+dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
+        const editedTag = inc.last_edited_at ? `<span style="font-size:9px;color:#fbbf24;margin-left:4px;" title="Edited ${new Date(inc.last_edited_at).toLocaleString()}">✎</span>` : '';
         return `
           <tr onclick="toggleHistoryRow(${inc.id})" style="cursor:pointer;">
-            <td class="h-num">${escHtml(inc.incident_number||'—')}</td>
+            <td class="h-num">${escHtml(inc.incident_number||'—')}${editedTag}</td>
             <td class="h-pri ${pColors[inc.priority]||''}">P${inc.priority}</td>
-            <td class="h-type">${escHtml(inc.call_type||'—')}</td>
+            <td class="h-type">${escHtml((inc.incident_type||inc.call_type||'—').split(' > ')[0])}</td>
             <td class="h-loc">${escHtml((inc.location_description||'—').substring(0,28))}</td>
             <td class="h-loc">${escHtml(campus?campus.name:'—')}</td>
             <td class="h-time">${dtStr}</td>
             <td><span class="h-status ${inc.status||'closed'}">${inc.status||'closed'}</span></td>
+            <td><button class="cad-btn-secondary" style="padding:1px 7px;font-size:10px;" onclick="event.stopPropagation();openHistEdit(${inc.id})"><i class="bi bi-pencil"></i></button></td>
           </tr>
           <tr class="history-detail-row ${historyExpanded[inc.id]?'open':''}" id="hdr-${inc.id}">
-            <td colspan="7"><strong>Location:</strong> ${escHtml(inc.location_description||'—')}<br>${inc.caller_name?`<strong>Caller:</strong> ${escHtml(inc.caller_name)}${inc.caller_contact?' · '+escHtml(inc.caller_contact):''}<br>`:''}<strong>Opened:</strong> ${new Date(inc.created_at).toLocaleString()}</td>
+            <td colspan="8">
+              <strong>Location:</strong> ${escHtml(inc.location_description||'—')}<br>
+              ${inc.caller_name?`<strong>Caller:</strong> ${escHtml(inc.caller_name)}${inc.caller_contact?' · '+escHtml(inc.caller_contact):''}<br>`:''}
+              <strong>Opened:</strong> ${new Date(inc.created_at).toLocaleString()}
+              ${inc.last_edited_at?`<br><span class="edit-stamp">Last edited: ${new Date(inc.last_edited_at).toLocaleString()} by ${escHtml(inc.last_edited_by||'SOC')}</span>`:''}
+            </td>
           </tr>`;
       }).join('')}</tbody>
     </table>`;
@@ -1991,6 +2286,247 @@ function toggleHistoryRow(id) {
   historyExpanded[id] = !historyExpanded[id];
   const row = document.getElementById('hdr-'+id);
   if (row) row.classList.toggle('open', historyExpanded[id]);
+}
+
+
+
+/* ════════════════════════════════════════════════
+   ROSTER
+════════════════════════════════════════════════ */
+
+function getRosterForCampusDay(campusId, day) {
+  return state.rosterTemplates.filter(r =>
+    r.campus_id === campusId &&
+    (r.service_day === day || r.service_day === 'both')
+  );
+}
+
+async function loadRoster() {
+  if (!state.selectedCampus) return;
+  const campusId = state.selectedCampus.id;
+  const entries = getRosterForCampusDay(campusId, state.serviceDay);
+
+  if (!entries.length) {
+    showAlert('No roster template found for this campus/day.', 'warning');
+    return;
+  }
+
+  // Check if units already exist
+  const existing = state.units.filter(u => u.campus_id === campusId);
+  if (existing.length > 0) {
+    if (!confirm(`${existing.length} unit(s) already loaded for this campus. Load roster anyway? This will add to existing units.`)) return;
+  }
+
+  const now = new Date().toISOString();
+  const inserts = entries.map(e => ({
+    campus_id: campusId,
+    unit_label: e.unit_label,
+    unit_type: e.unit_type,
+    status: 'available',
+    updated_at: now
+  }));
+
+  const { error } = await db.from('units').insert(inserts);
+  if (error) { showAlert('Error loading roster: ' + error.message, 'danger'); return; }
+
+  await loadUnits(campusId);
+  showAlert(`Roster loaded — ${inserts.length} unit(s) added for ${state.selectedCampus.name}.`, 'success');
+}
+
+function openRosterManager() {
+  renderCampusDropdowns();
+  if (state.selectedCampus) document.getElementById('rm-campus').value = state.selectedCampus.id;
+  document.getElementById('rm-day').value = state.serviceDay;
+  document.getElementById('rm-name').value = '';
+  renderRosterList();
+  new bootstrap.Modal(document.getElementById('rosterModal')).show();
+}
+
+function renderRosterList() {
+  const campusId = parseInt(document.getElementById('rm-campus').value);
+  const day = document.getElementById('rm-day').value;
+  const el = document.getElementById('rm-list');
+
+  if (!campusId) {
+    el.innerHTML = `<span style="color:var(--cad-muted); font-size:12px;">Select a campus</span>`;
+    return;
+  }
+
+  const entries = state.rosterTemplates.filter(r =>
+    r.campus_id === campusId &&
+    (day === 'both' ? true : (r.service_day === day || r.service_day === 'both'))
+  );
+
+  if (!entries.length) {
+    el.innerHTML = `<span style="color:var(--cad-muted); font-size:12px;">No entries yet for this campus/day combination.</span>`;
+    return;
+  }
+
+  const order = { officer: 0, staff: 1, volunteer: 2 };
+  const sorted = [...entries].sort((a,b) => (order[a.unit_type]||9) - (order[b.unit_type]||9) || a.unit_label.localeCompare(b.unit_label));
+
+  el.innerHTML = sorted.map(r => `
+    <div class="roster-row">
+      <span class="rr-label">${escHtml(r.unit_label)}</span>
+      <span class="roster-type-badge type-${r.unit_type}">${formatUnitType(r.unit_type)}</span>
+      <span class="svc-day-tag ${r.service_day==='sunday'?'tag-sun':r.service_day==='wednesday'?'tag-wed':'tag-both'}" style="font-size:9px; padding:1px 5px;">
+        ${r.service_day === 'both' ? 'SUN+WED' : r.service_day.toUpperCase().slice(0,3)}
+      </span>
+      <button class="cad-btn-danger" style="padding:1px 8px; font-size:10px;" onclick="deleteRosterEntry(${r.id})">
+        <i class="bi bi-trash"></i>
+      </button>
+    </div>
+  `).join('');
+}
+
+async function addRosterEntry() {
+  const campusId = parseInt(document.getElementById('rm-campus').value);
+  const name = document.getElementById('rm-name').value.trim();
+  const type = document.getElementById('rm-type').value;
+  const day = document.getElementById('rm-day').value;
+
+  if (!campusId || !name) { showAlert('Campus and name are required.', 'danger'); return; }
+
+  const { data, error } = await db.from('roster_template_units').insert({
+    campus_id: campusId, unit_label: name, unit_type: type, service_day: day
+  }).select().single();
+
+  if (error) { showAlert('Error: ' + error.message, 'danger'); return; }
+  state.rosterTemplates.push(data);
+  document.getElementById('rm-name').value = '';
+  renderRosterList();
+  showAlert(`${name} added to roster.`, 'success');
+}
+
+async function deleteRosterEntry(id) {
+  if (!confirm('Remove this entry from the template?')) return;
+  await db.from('roster_template_units').delete().eq('id', id);
+  state.rosterTemplates = state.rosterTemplates.filter(r => r.id !== id);
+  renderRosterList();
+}
+
+function setServiceDay(day) {
+  state.serviceDay = day;
+  document.getElementById('btn-sun').classList.toggle('active', day === 'sunday');
+  document.getElementById('btn-wed').classList.toggle('active', day === 'wednesday');
+  const tag = document.getElementById('svc-day-tag');
+  tag.textContent = day === 'sunday' ? 'SUNDAY' : 'WEDNESDAY';
+  tag.className = 'svc-day-tag ms-1 ' + (day === 'sunday' ? 'tag-sun' : 'tag-wed');
+}
+
+async function confirmClearService() {
+  if (!state.selectedCampus) return;
+  const campusId = state.selectedCampus.id;
+  const unitCount = state.units.filter(u => u.campus_id === campusId).length;
+  const activeInc = state.incidents.filter(i => i.campus_id === campusId && i.status === 'active').length;
+  if (!confirm(`End service for ${state.selectedCampus.name}?\n\nThis will remove ${unitCount} unit(s)${activeInc ? ' and close ' + activeInc + ' open incident(s)' : ''}.`)) return;
+  const now = new Date().toISOString();
+  const openIds = state.incidents.filter(i => i.campus_id === campusId && i.status === 'active').map(i => i.id);
+  if (openIds.length) {
+    await db.from('incidents').update({ status: 'closed' }).in('id', openIds);
+    for (const id of openIds) {
+      await db.from('incident_log').insert({ incident_id: id, entry_text: 'Incident closed — service ended.', entered_by: 'SOC', entered_at: now });
+    }
+  }
+  await db.from('units').delete().eq('campus_id', campusId);
+  state.units = state.units.filter(u => u.campus_id !== campusId);
+  state.incidents = state.incidents.filter(i => i.campus_id !== campusId);
+  state.selectedIncident = null;
+  clearDetailPanel(); renderQueue(); renderUnits(); renderPins(); updateStats();
+  showAlert('Service ended for ' + state.selectedCampus.name + '.', 'success');
+}
+
+
+/* ════════════════════════════════════════════════
+   HISTORY EDIT / DELETE
+════════════════════════════════════════════════ */
+let histEditId = null;
+
+function openHistEdit(incId) {
+  const inc = historyData.find(i => i.id === incId);
+  if (!inc) return;
+  histEditId = incId;
+  document.getElementById('hedit-title').textContent = 'Edit — ' + (inc.incident_number || 'Incident');
+  document.getElementById('hedit-calltype').value = inc.call_type || inc.incident_type || '';
+  document.getElementById('hedit-priority').value = inc.priority || 3;
+  document.getElementById('hedit-location').value = inc.location_description || '';
+  document.getElementById('hedit-status').value = inc.status || 'closed';
+  document.getElementById('hedit-note').value = '';
+  // Show edit history stamps from log
+  const logs = state.incidentLogs[incId] || [];
+  const editLogs = logs.filter(l => l.entry_text && l.entry_text.startsWith('[EDIT]'));
+  const stampsEl = document.getElementById('hedit-stamps');
+  if (editLogs.length) {
+    stampsEl.innerHTML = '<div class="divider-label">Edit History</div>' +
+      editLogs.map(l => `<div class="edit-stamp">${new Date(l.entered_at).toLocaleString()} — ${escHtml(l.entry_text.replace('[EDIT] ',''))}</div>`).join('');
+  } else {
+    stampsEl.innerHTML = '';
+  }
+  document.getElementById('hist-edit-overlay').classList.add('open');
+  document.getElementById('hist-edit-panel').classList.add('open');
+  // Load log if not already loaded
+  if (!state.incidentLogs[incId]) loadLog(incId).then(() => {
+    const logs2 = state.incidentLogs[incId] || [];
+    const editLogs2 = logs2.filter(l => l.entry_text && l.entry_text.startsWith('[EDIT]'));
+    if (editLogs2.length) {
+      stampsEl.innerHTML = '<div class="divider-label">Edit History</div>' +
+        editLogs2.map(l => `<div class="edit-stamp">${new Date(l.entered_at).toLocaleString()} — ${escHtml(l.entry_text.replace('[EDIT] ',''))}</div>`).join('');
+    }
+  });
+}
+
+function closeHistEdit() {
+  histEditId = null;
+  document.getElementById('hist-edit-overlay').classList.remove('open');
+  document.getElementById('hist-edit-panel').classList.remove('open');
+}
+
+async function saveHistEdit() {
+  if (!histEditId) return;
+  const note = document.getElementById('hedit-note').value.trim();
+  if (!note) { showAlert('Edit note is required.', 'danger'); return; }
+  const callType = document.getElementById('hedit-calltype').value.trim();
+  const priority = parseInt(document.getElementById('hedit-priority').value);
+  const location = document.getElementById('hedit-location').value.trim();
+  const status = document.getElementById('hedit-status').value;
+  const now = new Date().toISOString();
+  const { error } = await db.from('incidents').update({
+    call_type: callType,
+    priority,
+    location_description: location,
+    status,
+    last_edited_at: now,
+    last_edited_by: state.session?.role === 'admin' ? 'ADMIN' : 'SOC'
+  }).eq('id', histEditId);
+  if (error) { showAlert('Save failed: ' + error.message, 'danger'); return; }
+  await db.from('incident_log').insert({
+    incident_id: histEditId,
+    entry_text: '[EDIT] ' + note,
+    entered_by: state.session?.role === 'admin' ? 'ADMIN' : 'SOC',
+    entered_at: now
+  });
+  // Update local historyData
+  const idx = historyData.findIndex(i => i.id === histEditId);
+  if (idx > -1) {
+    historyData[idx] = { ...historyData[idx], call_type: callType, priority, location_description: location, status, last_edited_at: now };
+  }
+  closeHistEdit();
+  filterHistory();
+  showAlert('Incident updated.', 'success');
+}
+
+async function deleteHistoryIncident() {
+  if (!histEditId) return;
+  const inc = historyData.find(i => i.id === histEditId);
+  if (!confirm('Permanently delete ' + (inc?.incident_number || 'this incident') + '? This cannot be undone.')) return;
+  const { error } = await db.from('incidents').delete().eq('id', histEditId);
+  if (error) { showAlert('Delete failed: ' + error.message, 'danger'); return; }
+  historyData = historyData.filter(i => i.id !== histEditId);
+  state.incidents = state.incidents.filter(i => i.id !== histEditId);
+  closeHistEdit();
+  filterHistory();
+  renderQueue();
+  showAlert('Incident deleted.', 'success');
 }
 
 function updateStats() {
@@ -2043,5 +2579,107 @@ document.addEventListener('keydown', e => {
 ══════════════════════════════════ */
 boot();
 </script>
+<div class="modal fade" id="rosterModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content cad-modal-content">
+      <div class="cad-modal-header">
+        <span class="cad-modal-title"><i class="bi bi-people-fill me-2"></i>Roster Template Manager</span>
+        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="padding:14px;">
+        <!-- Campus + Day filters -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+          <div>
+            <label class="cad-label">Campus</label>
+            <select class="cad-input" id="rm-campus" onchange="renderRosterList()" style="margin-bottom:0;"></select>
+          </div>
+          <div>
+            <label class="cad-label">Service Day</label>
+            <select class="cad-input" id="rm-day" onchange="renderRosterList()" style="margin-bottom:0;">
+              <option value="sunday">Sunday</option>
+              <option value="wednesday">Wednesday</option>
+              <option value="both">Both Days</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Current roster list -->
+        <div class="divider-label">Current Template</div>
+        <div id="rm-list" style="min-height:80px; margin-bottom:12px;"></div>
+
+        <!-- Add entry form -->
+        <div class="divider-label">Add to Template</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:8px; align-items:end;">
+          <div>
+            <label class="cad-label">Last Name</label>
+            <input type="text" class="cad-input" id="rm-name" placeholder="Smith" style="margin-bottom:0;" />
+          </div>
+          <div>
+            <label class="cad-label">Type</label>
+            <select class="cad-input" id="rm-type" style="margin-bottom:0;">
+              <option value="officer">Hired Officer</option>
+              <option value="volunteer">Volunteer</option>
+              <option value="staff">Staff</option>
+            </select>
+          </div>
+          <div>
+            <button class="cad-btn-primary" style="padding:6px 14px; white-space:nowrap;" onclick="addRosterEntry()">
+              <i class="bi bi-plus-lg me-1"></i> Add
+            </button>
+          </div>
+        </div>
+      </div>
+
+<!-- HISTORY EDIT OVERLAY -->
+<div id="hist-edit-overlay" onclick="closeHistEdit()"></div>
+
+<!-- HISTORY EDIT POPOUT -->
+<div id="hist-edit-panel">
+  <div class="hedit-header">
+    <i class="bi bi-pencil-square"></i>
+    <span id="hedit-title">Edit Incident</span>
+    <button onclick="closeHistEdit()" style="margin-left:auto;background:none;border:none;color:#aac8e8;font-size:16px;cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <div class="hedit-body">
+    <div class="hedit-field">
+      <label class="cad-label">Call Type</label>
+      <input type="text" class="hedit-input" id="hedit-calltype" />
+    </div>
+    <div class="hedit-field">
+      <label class="cad-label">Priority</label>
+      <select class="hedit-input" id="hedit-priority">
+        <option value="1">P1 — Critical</option>
+        <option value="2">P2 — Urgent</option>
+        <option value="3">P3 — Routine</option>
+        <option value="4">P4 — Admin</option>
+      </select>
+    </div>
+    <div class="hedit-field">
+      <label class="cad-label">Location / Description</label>
+      <input type="text" class="hedit-input" id="hedit-location" />
+    </div>
+    <div class="hedit-field">
+      <label class="cad-label">Status</label>
+      <select class="hedit-input" id="hedit-status">
+        <option value="active">Active</option>
+        <option value="closed">Closed</option>
+      </select>
+    </div>
+    <div class="hedit-field">
+      <label class="cad-label">Edit Note (required — logged with timestamp)</label>
+      <textarea class="hedit-input" id="hedit-note" rows="2" placeholder="Reason for edit..."></textarea>
+    </div>
+    <div id="hedit-stamps" style="margin-top:8px;"></div>
+  </div>
+  <div class="hedit-footer">
+    <button class="cad-btn-danger" style="padding:5px 12px;" onclick="deleteHistoryIncident()">
+      <i class="bi bi-trash me-1"></i>Delete
+    </button>
+    <button class="cad-btn-secondary" style="padding:5px 12px;" onclick="closeHistEdit()">Cancel</button>
+    <button class="cad-btn-primary" style="padding:5px 14px; margin-left:auto;" onclick="saveHistEdit()">
+      <i class="bi bi-check-lg me-1"></i>Save Changes
+    </button>
+  </div>
+</div>
 </body>
 </html>
