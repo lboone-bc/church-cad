@@ -2450,6 +2450,8 @@ async function deleteHistoryIncident() {
   if (!histEditId) return;
   const inc = historyData.find(i => i.id === histEditId);
   if (!confirm('Permanently delete ' + (inc?.incident_number || 'this incident') + '? This cannot be undone.')) return;
+  // Delete log entries first to satisfy foreign key constraint
+  await db.from('incident_log').delete().eq('incident_id', histEditId);
   const { error } = await db.from('incidents').delete().eq('id', histEditId);
   if (error) { showAlert('Delete failed: ' + error.message, 'danger'); return; }
   historyData = historyData.filter(i => i.id !== histEditId);
@@ -2473,6 +2475,10 @@ function updateStats() {
 ══════════════════════════════════ */
 function formatStatus(s) {
   return { available:'AVAILABLE', assigned:'ASSIGNED', on_scene:'ON SCENE', unavailable:'UNAVAILABLE' }[s] || s.toUpperCase();
+}
+
+function formatUnitType(t) {
+  return { officer:'Hired Officer', volunteer:'Volunteer', staff:'Staff', admin:'Admin / Supervisor' }[t] || (t ? t.charAt(0).toUpperCase() + t.slice(1) : '—');
 }
 
 function timeAgo(iso) {
