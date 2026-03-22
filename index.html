@@ -1913,7 +1913,7 @@ function openNewIncident() {
   // pre-select current campus
   if (state.selectedCampus) document.getElementById('inc-campus').value = state.selectedCampus.id;
   document.getElementById('p3').checked = true;
-  new bootstrap.Modal(document.getElementById('newIncidentModal')).show();
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('newIncidentModal')).show();
 }
 
 function populateCallTypes() {
@@ -2026,7 +2026,7 @@ async function closeSelectedIncident() {
 function openAddUnit() {
   document.getElementById('unit-label').value = '';
   if (state.selectedCampus) document.getElementById('unit-campus-select').value = state.selectedCampus.id;
-  new bootstrap.Modal(document.getElementById('addUnitModal')).show();
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('addUnitModal')).show();
 }
 
 async function submitAddUnit() {
@@ -2270,7 +2270,7 @@ function openRosterManager() {
   document.getElementById('rm-day').value = state.serviceDay;
   document.getElementById('rm-name').value = '';
   renderRosterList();
-  new bootstrap.Modal(document.getElementById('rosterModal')).show();
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('rosterModal')).show();
 }
 
 function renderRosterList() {
@@ -2375,7 +2375,7 @@ let histEditId = null;
 
 function openHistEdit(incId) {
   const inc = historyData.find(i => i.id === incId);
-  if (!inc) return;
+  if (!inc) { showAlert('Incident data not loaded yet. Try again.', 'warning'); return; }
   histEditId = incId;
   document.getElementById('hedit-title').textContent = 'Edit — ' + (inc.incident_number || 'Incident');
   document.getElementById('hedit-calltype').value = inc.call_type || inc.incident_type || '';
