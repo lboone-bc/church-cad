@@ -1138,96 +1138,10 @@
 </div>
 
 </div><!-- end #cad-board -->
-<!-- ══════════════════════════════════════
-     NEW INCIDENT MODAL
-══════════════════════════════════════ -->
-<div class="modal fade" id="newIncidentModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content cad-modal-content">
-      <div class="cad-modal-header">
-        <span class="cad-modal-title"><i class="bi bi-exclamation-triangle me-2"></i>New Incident</span>
-        <button type="button" class="btn-close btn-close-white" style="margin-left:auto;" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body" style="padding:14px;">
 
-        <label class="cad-label">Campus</label>
-        <select class="cad-input" id="inc-campus" style="margin-bottom:10px;" onchange="populateCallTypes()">
-          <option value="">— Select —</option>
-        </select>
-
-        <label class="cad-label">Call Type <span style="color:var(--cad-muted);font-size:10px;font-weight:400;">— type code or description</span></label>
-        <div class="ct-search-wrap">
-          <input type="text" id="ct-search" autocomplete="off" placeholder="10-40, Fight, SEC-AT…"
-            oninput="ctOnInput()" onkeydown="ctOnKey(event)" onfocus="ctOnFocus()" />
-          <input type="hidden" id="inc-calltype" />
-          <div id="ct-dropdown"></div>
-        </div>
-        <div id="ct-selected-badge" class="ct-selected-badge"></div>
-
-        <label class="cad-label">Priority</label>
-        <div class="priority-pills">
-          <div class="priority-pill"><input type="radio" name="inc-priority" id="p1" value="1"><label for="p1">P1 — CRITICAL</label></div>
-          <div class="priority-pill"><input type="radio" name="inc-priority" id="p2" value="2"><label for="p2">P2 — URGENT</label></div>
-          <div class="priority-pill"><input type="radio" name="inc-priority" id="p3" value="3" checked><label for="p3">P3 — ROUTINE</label></div>
-          <div class="priority-pill"><input type="radio" name="inc-priority" id="p4" value="4"><label for="p4">P4 — ADMIN</label></div>
-        </div>
-
-        <label class="cad-label">Location / Description</label>
-        <input type="text" class="cad-input" id="inc-location" placeholder="e.g. Main Lobby, Parking Lot C, Room 201" />
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-          <div>
-            <label class="cad-label">Caller Name</label>
-            <input type="text" class="cad-input" id="inc-caller-name" placeholder="Optional" />
-          </div>
-          <div>
-            <label class="cad-label">Caller Contact</label>
-            <input type="text" class="cad-input" id="inc-caller-contact" placeholder="Optional" />
-          </div>
-        </div>
-
-        <label class="cad-label">Initial Note</label>
-        <textarea class="cad-input" id="inc-note" rows="2" placeholder="Initial observations or caller statement..."></textarea>
-
-      </div>
-      <div class="modal-footer" style="background:var(--cad-header); border-top:1px solid var(--cad-border); padding:10px 14px; gap:8px;">
-        <button class="cad-btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button class="cad-btn-primary" onclick="submitNewIncident()"><i class="bi bi-check-lg me-1"></i> Open Incident</button>
-      </div>
-    </div>
-  </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     ADD UNIT MODAL
-══════════════════════════════════════ -->
-<div class="modal fade" id="addUnitModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-sm">
-    <div class="modal-content cad-modal-content">
-      <div class="cad-modal-header">
-        <span class="cad-modal-title"><i class="bi bi-person-plus me-2"></i>Add Unit</span>
-        <button type="button" class="btn-close btn-close-white" style="margin-left:auto;" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body" style="padding:14px;">
-        <label class="cad-label">Campus</label>
-        <select class="cad-input" id="unit-campus-select"></select>
 
-        <label class="cad-label">Unit Label</label>
-        <input type="text" class="cad-input" id="unit-label" placeholder="e.g. Alpha-1, Officer Smith" />
-
-        <label class="cad-label">Type</label>
-        <select class="cad-input" id="unit-type">
-          <option value="volunteer">Volunteer</option>
-          <option value="officer">Hired Officer</option>
-          <option value="admin">Admin / Supervisor</option>
-        </select>
-      </div>
-      <div class="modal-footer" style="background:var(--cad-header); border-top:1px solid var(--cad-border); padding:10px 14px; gap:8px;">
-        <button class="cad-btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button class="cad-btn-primary" onclick="submitAddUnit()">Add Unit</button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- Bootstrap 5 JS -->
@@ -2589,56 +2503,7 @@ document.addEventListener('keydown', e => {
 ══════════════════════════════════ */
 boot();
 </script>
-<div class="modal fade" id="rosterModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content cad-modal-content">
-      <div class="cad-modal-header">
-        <span class="cad-modal-title"><i class="bi bi-people-fill me-2"></i>Roster Template Manager</span>
-        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body" style="padding:14px;">
-        <!-- Campus + Day filters -->
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
-          <div>
-            <label class="cad-label">Campus</label>
-            <select class="cad-input" id="rm-campus" onchange="renderRosterList()" style="margin-bottom:0;"></select>
-          </div>
-          <div>
-            <label class="cad-label">Service Day</label>
-            <select class="cad-input" id="rm-day" onchange="renderRosterList()" style="margin-bottom:0;">
-              <option value="sunday">Sunday</option>
-              <option value="wednesday">Wednesday</option>
-              <option value="both">Both Days</option>
-            </select>
-          </div>
-        </div>
 
-        <!-- Current roster list -->
-        <div class="divider-label">Current Template</div>
-        <div id="rm-list" style="min-height:80px; margin-bottom:12px;"></div>
-
-        <!-- Add entry form -->
-        <div class="divider-label">Add to Template</div>
-        <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:8px; align-items:end;">
-          <div>
-            <label class="cad-label">Last Name</label>
-            <input type="text" class="cad-input" id="rm-name" placeholder="Smith" style="margin-bottom:0;" />
-          </div>
-          <div>
-            <label class="cad-label">Type</label>
-            <select class="cad-input" id="rm-type" style="margin-bottom:0;">
-              <option value="officer">Hired Officer</option>
-              <option value="volunteer">Volunteer</option>
-              <option value="staff">Staff</option>
-            </select>
-          </div>
-          <div>
-            <button class="cad-btn-primary" style="padding:6px 14px; white-space:nowrap;" onclick="addRosterEntry()">
-              <i class="bi bi-plus-lg me-1"></i> Add
-            </button>
-          </div>
-        </div>
-      </div>
 
 <!-- HISTORY EDIT OVERLAY -->
 <div id="hist-edit-overlay" onclick="closeHistEdit()"></div>
@@ -2691,5 +2556,142 @@ boot();
     </button>
   </div>
 </div>
+
+<!-- ══ MODALS — must be direct children of body ══ -->
+<div class="modal fade" id="newIncidentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content cad-modal-content">
+      <div class="cad-modal-header">
+        <span class="cad-modal-title"><i class="bi bi-exclamation-triangle me-2"></i>New Incident</span>
+        <button type="button" class="btn-close btn-close-white" style="margin-left:auto;" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="padding:14px;">
+
+        <label class="cad-label">Campus</label>
+        <select class="cad-input" id="inc-campus" style="margin-bottom:10px;" onchange="populateCallTypes()">
+          <option value="">— Select —</option>
+        </select>
+
+        <label class="cad-label">Call Type <span style="color:var(--cad-muted);font-size:10px;font-weight:400;">— type code or description</span></label>
+        <div class="ct-search-wrap">
+          <input type="text" id="ct-search" autocomplete="off" placeholder="10-40, Fight, SEC-AT…"
+            oninput="ctOnInput()" onkeydown="ctOnKey(event)" onfocus="ctOnFocus()" />
+          <input type="hidden" id="inc-calltype" />
+          <div id="ct-dropdown"></div>
+        </div>
+        <div id="ct-selected-badge" class="ct-selected-badge"></div>
+
+        <label class="cad-label">Priority</label>
+        <div class="priority-pills">
+          <div class="priority-pill"><input type="radio" name="inc-priority" id="p1" value="1"><label for="p1">P1 — CRITICAL</label></div>
+          <div class="priority-pill"><input type="radio" name="inc-priority" id="p2" value="2"><label for="p2">P2 — URGENT</label></div>
+          <div class="priority-pill"><input type="radio" name="inc-priority" id="p3" value="3" checked><label for="p3">P3 — ROUTINE</label></div>
+          <div class="priority-pill"><input type="radio" name="inc-priority" id="p4" value="4"><label for="p4">P4 — ADMIN</label></div>
+        </div>
+
+        <label class="cad-label">Location / Description</label>
+        <input type="text" class="cad-input" id="inc-location" placeholder="e.g. Main Lobby, Parking Lot C, Room 201" />
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div>
+            <label class="cad-label">Caller Name</label>
+            <input type="text" class="cad-input" id="inc-caller-name" placeholder="Optional" />
+          </div>
+          <div>
+            <label class="cad-label">Caller Contact</label>
+            <input type="text" class="cad-input" id="inc-caller-contact" placeholder="Optional" />
+          </div>
+        </div>
+
+        <label class="cad-label">Initial Note</label>
+        <textarea class="cad-input" id="inc-note" rows="2" placeholder="Initial observations or caller statement..."></textarea>
+
+      </div>
+      <div class="modal-footer" style="background:var(--cad-header); border-top:1px solid var(--cad-border); padding:10px 14px; gap:8px;">
+        <button class="cad-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="cad-btn-primary" onclick="submitNewIncident()"><i class="bi bi-check-lg me-1"></i> Open Incident</button>
+      </div>
+    </div>
+  </div>
+
+<div class="modal fade" id="addUnitModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content cad-modal-content">
+      <div class="cad-modal-header">
+        <span class="cad-modal-title"><i class="bi bi-person-plus me-2"></i>Add Unit</span>
+        <button type="button" class="btn-close btn-close-white" style="margin-left:auto;" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="padding:14px;">
+        <label class="cad-label">Campus</label>
+        <select class="cad-input" id="unit-campus-select"></select>
+
+        <label class="cad-label">Unit Label</label>
+        <input type="text" class="cad-input" id="unit-label" placeholder="e.g. Alpha-1, Officer Smith" />
+
+        <label class="cad-label">Type</label>
+        <select class="cad-input" id="unit-type">
+          <option value="volunteer">Volunteer</option>
+          <option value="officer">Hired Officer</option>
+          <option value="admin">Admin / Supervisor</option>
+        </select>
+      </div>
+      <div class="modal-footer" style="background:var(--cad-header); border-top:1px solid var(--cad-border); padding:10px 14px; gap:8px;">
+        <button class="cad-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="cad-btn-primary" onclick="submitAddUnit()">Add Unit</button>
+      </div>
+    </div>
+  </div>
+
+<div class="modal fade" id="rosterModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content cad-modal-content">
+      <div class="cad-modal-header">
+        <span class="cad-modal-title"><i class="bi bi-people-fill me-2"></i>Roster Template Manager</span>
+        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="padding:14px;">
+        <!-- Campus + Day filters -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+          <div>
+            <label class="cad-label">Campus</label>
+            <select class="cad-input" id="rm-campus" onchange="renderRosterList()" style="margin-bottom:0;"></select>
+          </div>
+          <div>
+            <label class="cad-label">Service Day</label>
+            <select class="cad-input" id="rm-day" onchange="renderRosterList()" style="margin-bottom:0;">
+              <option value="sunday">Sunday</option>
+              <option value="wednesday">Wednesday</option>
+              <option value="both">Both Days</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Current roster list -->
+        <div class="divider-label">Current Template</div>
+        <div id="rm-list" style="min-height:80px; margin-bottom:12px;"></div>
+
+        <!-- Add entry form -->
+        <div class="divider-label">Add to Template</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:8px; align-items:end;">
+          <div>
+            <label class="cad-label">Last Name</label>
+            <input type="text" class="cad-input" id="rm-name" placeholder="Smith" style="margin-bottom:0;" />
+          </div>
+          <div>
+            <label class="cad-label">Type</label>
+            <select class="cad-input" id="rm-type" style="margin-bottom:0;">
+              <option value="officer">Hired Officer</option>
+              <option value="volunteer">Volunteer</option>
+              <option value="staff">Staff</option>
+            </select>
+          </div>
+          <div>
+            <button class="cad-btn-primary" style="padding:6px 14px; white-space:nowrap;" onclick="addRosterEntry()">
+              <i class="bi bi-plus-lg me-1"></i> Add
+            </button>
+          </div>
+        </div>
+      </div>
+
 </body>
 </html>
