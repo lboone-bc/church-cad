@@ -608,7 +608,7 @@
     <div class="panel-header">
       <i class="bi bi-file-text"></i> Incident Detail
       <span id="detail-inc-number" style="color:var(--cad-text); font-weight:400; margin-left:6px; font-size:11px;"></span>
-      <div id="detail-action-btns" style="margin-left:auto; display:none; gap:6px; display:flex;">
+      <div id="detail-action-btns" style="margin-left:auto; display:none; gap:6px;">
         <button class="cad-btn-danger" style="padding:2px 8px; font-size:10px;" onclick="closeSelectedIncident()">Close</button>
       </div>
     </div>
@@ -741,8 +741,8 @@
    CONFIGURATION — EDIT THESE TWO VALUES
    Get them from: Supabase → Project Settings → API
 ══════════════════════════════════ */
-const SUPABASE_URL  = 'YOUR_SUPABASE_URL_HERE';
-const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY_HERE';
+const SUPABASE_URL  = 'https://elgofpbkejgmtwndeumu.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsZ29mcGJrZWpnbXR3bmRldW11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxODIzMzksImV4cCI6MjA4OTc1ODMzOX0.0KUluuQ39Qu2UYJTIIf-7whodajONjNrFv9NuyQcUuE';
 
 /* ══════════════════════════════════
    INIT
@@ -1353,7 +1353,7 @@ async function uploadMapToSupabase(file) {
   showAlert('Map uploaded and saved.', 'success');
 }
 
-function onMapClick(event) {
+async function onMapClick(event) {
   if (!state.selectedIncident) return;
   const img = document.getElementById('map-img');
   const rect = img.getBoundingClientRect();
@@ -1364,7 +1364,7 @@ function onMapClick(event) {
   state.selectedIncident.pin_y = parseFloat(y);
 
   if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
-    db.from('incidents').update({ pin_x: x, pin_y: y }).eq('id', state.selectedIncident.id);
+    await db.from('incidents').update({ pin_x: x, pin_y: y }).eq('id', state.selectedIncident.id);
   }
 
   renderPins();
