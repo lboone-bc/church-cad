@@ -1525,9 +1525,7 @@ function loadDemoData() {
     ]
   };
   renderCampusDropdowns();
-  // default to first campus
-  document.getElementById('campus-select').value = 1;
-  onCampusChange();
+  // Arden default handled in loadCampuses()
 }
 
 /* ══════════════════════════════════
@@ -1535,7 +1533,17 @@ function loadDemoData() {
 ══════════════════════════════════ */
 async function loadCampuses() {
   const { data, error } = await db.from('campuses').select('*').eq('is_active', true).order('name');
-  if (!error) { state.campuses = data; renderCampusDropdowns(); }
+  if (!error) {
+    state.campuses = data;
+    renderCampusDropdowns();
+    if (!state.selectedCampus) {
+      const arden = data.find(c => c.id === 1);
+      if (arden) {
+        document.getElementById('campus-select').value = 1;
+        onCampusChange();
+      }
+    }
+  }
 }
 
 /* ════════════════════════════════════════════════
@@ -1703,14 +1711,16 @@ function onCampusChange() {
    RENDER CAMPUS DROPDOWNS
 ══════════════════════════════════ */
 function renderCampusDropdowns() {
-  const selects = ['campus-select','inc-campus','unit-campus-select'];
+  const selects = ['campus-select','inc-campus','unit-campus-select','rm-campus'];
   selects.forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
+    const prev = el.value;
     el.innerHTML = '<option value="">— Select —</option>';
     state.campuses.forEach(c => {
       el.innerHTML += `<option value="${c.id}">${c.name}</option>`;
     });
+    if (prev) el.value = prev;
   });
 }
 
