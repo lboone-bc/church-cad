@@ -1048,7 +1048,7 @@
       <div class="detail-tab" id="tab-history" onclick="switchDetailTab('history')">History</div>
     </div>
     <!-- GENERAL TAB -->
-    <div class="tab-pane active" id="pane-general" id="detail-body">
+    <div class="tab-pane active" id="pane-general">
       <div class="detail-empty" id="detail-empty-msg">
         <i class="bi bi-arrow-left-circle" style="font-size:32px; color:var(--cad-border); display:block; margin-bottom:8px;"></i>
         <span style="color:var(--cad-muted); font-size:12px;">Select an incident from the queue</span>
@@ -1629,8 +1629,8 @@ document.addEventListener('click', e => {
   }
 });
 
-async function loadCallTypes() { state.callTypes = CALL_TYPES_LIST.map((c,i) => ({id:i+1, ...c, description:c.desc, default_priority:c.pri, category:c.cat})); } = await db.from('call_types').select('*').order('category').order('code');
-  if (!error) state.callTypes = data;
+async function loadCallTypes() {
+  state.callTypes = CALL_TYPES_LIST.map((c,i) => ({id:i+1, ...c, description:c.desc, default_priority:c.pri, category:c.cat}));
 }
 async function loadUnits(campusId) {
   const { data, error } = await db.from('units').select('*').eq('campus_id', campusId).order('unit_label');
@@ -1864,7 +1864,7 @@ function selectIncident(id) {
 
 function renderDetailPanel() {
   const inc = state.selectedIncident;
-  const body = document.getElementById('detail-body');
+  const body = document.getElementById('pane-general');
   const logRow = document.getElementById('log-input-row');
   const actionBtns = document.getElementById('detail-action-btns');
 
@@ -1931,7 +1931,7 @@ function clearDetailPanel() {
   document.getElementById('detail-inc-number').textContent = '';
   document.getElementById('detail-action-btns').style.display = 'none';
   document.getElementById('log-input-row').style.display = 'none';
-  document.getElementById('detail-body').innerHTML = `
+  document.getElementById('pane-general').innerHTML = `
     <div class="detail-empty">
       <i class="bi bi-arrow-left-circle" style="font-size:32px; color:var(--cad-border); display:block; margin-bottom:8px;"></i>
       <span style="color:var(--cad-muted); font-size:12px;">Select an incident from the queue</span>
