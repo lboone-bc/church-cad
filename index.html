@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Church Security CAD</title>
+  <title>SecureCAD — Biltmore Church Security</title>
+
+  <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
 
   <style>
@@ -13,10 +16,10 @@
       --cad-panel:     #13161c;
       --cad-border:    #252830;
       --cad-header:    #1a1d24;
-      --cad-p1:        #dc2626;
-      --cad-p2:        #d97706;
-      --cad-p3:        #2563eb;
-      --cad-p4:        #4b5563;
+      --cad-p1:        #dc2626; /* Priority 1 - red   */
+      --cad-p2:        #d97706; /* Priority 2 - orange */
+      --cad-p3:        #2563eb; /* Priority 3 - blue   */
+      --cad-p4:        #4b5563; /* Priority 4 - gray   */
       --cad-text:      #e2e8f0;
       --cad-muted:     #64748b;
       --cad-accent:    #38bdf8;
@@ -48,7 +51,7 @@
       display: flex;
       align-items: center;
       padding: 0 12px;
-      gap: 10px;
+      gap: 12px;
       position: fixed;
       top: 0; left: 0; right: 0;
       z-index: 100;
@@ -79,35 +82,10 @@
       color: var(--cad-muted);
       white-space: nowrap;
     }
-    #topbar .stat-pill span { color: var(--cad-text); font-weight: 700; }
-
-    /* service day toggle */
-    .svc-toggle {
-      display: flex;
-      gap: 0;
-      border: 1px solid var(--cad-border);
-      border-radius: 3px;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .svc-toggle button {
-      background: var(--cad-panel);
-      border: none;
-      color: var(--cad-muted);
-      font-family: inherit;
-      font-size: 11px;
+    #topbar .stat-pill span {
+      color: var(--cad-text);
       font-weight: 700;
-      padding: 4px 10px;
-      cursor: pointer;
-      letter-spacing: 1px;
-      transition: background 0.1s, color 0.1s;
     }
-    .svc-toggle button.active {
-      background: var(--cad-accent);
-      color: #000;
-    }
-    .svc-toggle button:not(.active):hover { color: var(--cad-text); }
-
     #clock {
       margin-left: auto;
       font-size: 18px;
@@ -127,10 +105,12 @@
     #main-body {
       position: fixed;
       top: var(--topbar-h);
-      left: 0; right: 0;
+      left: 0;
+      right: 0;
       bottom: var(--bottom-h);
       display: grid;
       grid-template-columns: 300px 1fr 340px;
+      gap: 0;
       overflow: hidden;
     }
 
@@ -168,7 +148,7 @@
     .panel-body::-webkit-scrollbar-track { background: var(--cad-panel); }
     .panel-body::-webkit-scrollbar-thumb { background: var(--cad-border); border-radius: 2px; }
 
-    /* ── INCIDENT QUEUE ── */
+    /* ── INCIDENT QUEUE (LEFT) ── */
     .incident-card {
       border: 1px solid var(--cad-border);
       border-left: 4px solid var(--cad-p3);
@@ -186,33 +166,59 @@
     .incident-card.p3 { border-left-color: var(--cad-p3); }
     .incident-card.p4 { border-left-color: var(--cad-p4); }
 
-    .inc-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+    .inc-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3px;
+    }
     .inc-number { font-size: 10px; color: var(--cad-muted); }
-    .priority-badge { font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 2px; }
+    .priority-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 2px;
+    }
     .p1 .priority-badge { background: var(--cad-p1); color: #fff; }
     .p2 .priority-badge { background: var(--cad-p2); color: #fff; }
     .p3 .priority-badge { background: var(--cad-p3); color: #fff; }
     .p4 .priority-badge { background: var(--cad-p4); color: #9ca3af; }
+
     .inc-type { font-size: 13px; font-weight: 700; color: var(--cad-text); }
     .inc-location { font-size: 11px; color: var(--cad-muted); margin-top: 2px; }
     .inc-time { font-size: 10px; color: var(--cad-muted); }
 
-    /* ── MAP ── */
+    /* ── MAP PANEL (CENTER) ── */
     #map-container {
       position: relative;
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       background: #0a0c10;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
     }
-    #map-img { max-width: 100%; max-height: 100%; object-fit: contain; display: none; }
-    #map-placeholder { text-align: center; color: var(--cad-muted); }
-    #map-overlay { position: absolute; top:0; left:0; right:0; bottom:0; pointer-events: none; }
+    #map-img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: none;
+    }
+    #map-placeholder {
+      text-align: center;
+      color: var(--cad-muted);
+    }
+    #map-placeholder .bi { font-size: 48px; display: block; margin-bottom: 12px; color: var(--cad-border); }
+    #map-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+    }
     .map-pin {
       position: absolute;
-      width: 14px; height: 14px;
+      width: 14px;
+      height: 14px;
       border-radius: 50%;
       border: 2px solid #fff;
       transform: translate(-50%, -50%);
@@ -222,9 +228,11 @@
     .map-pin.p1 { background: var(--cad-p1); }
     .map-pin.p2 { background: var(--cad-p2); }
     .map-pin.p3 { background: var(--cad-p3); }
+
     #map-upload-btn {
       position: absolute;
-      bottom: 10px; right: 10px;
+      bottom: 10px;
+      right: 10px;
       background: var(--cad-header);
       border: 1px solid var(--cad-border);
       color: var(--cad-muted);
@@ -236,7 +244,7 @@
     #map-upload-btn:hover { color: var(--cad-text); border-color: var(--cad-accent); }
     #map-file-input { display: none; }
 
-    /* ── INCIDENT DETAIL ── */
+    /* ── INCIDENT DETAIL (RIGHT) ── */
     .detail-empty {
       display: flex;
       flex-direction: column;
@@ -246,6 +254,8 @@
       color: var(--cad-muted);
       text-align: center;
     }
+    .detail-empty .bi { font-size: 36px; display: block; margin-bottom: 10px; color: var(--cad-border); }
+
     .detail-field { margin-bottom: 12px; }
     .detail-label {
       font-size: 10px;
@@ -263,11 +273,19 @@
       padding: 5px 8px;
       min-height: 28px;
     }
+
+    /* Narrative log */
     #log-list { list-style: none; padding: 0; margin: 0; }
-    .log-entry { border-left: 2px solid var(--cad-border); padding: 4px 8px; margin-bottom: 6px; font-size: 12px; }
+    .log-entry {
+      border-left: 2px solid var(--cad-border);
+      padding: 4px 8px;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
     .log-entry .log-time { font-size: 10px; color: var(--cad-accent); font-weight: 700; }
     .log-entry .log-text { color: var(--cad-text); }
     .log-entry .log-by { font-size: 10px; color: var(--cad-muted); }
+
     #log-input-row {
       display: flex;
       gap: 6px;
@@ -298,6 +316,7 @@
       border-radius: 3px;
       cursor: pointer;
     }
+    #log-submit:disabled { background: var(--cad-border); color: var(--cad-muted); cursor: default; }
 
     /* ── BOTTOM UNIT BAR ── */
     #bottom-bar {
@@ -321,7 +340,7 @@
       flex-shrink: 0;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
     #units-scroll {
       flex: 1;
@@ -343,44 +362,41 @@
       border: 1px solid var(--cad-border);
       border-radius: 3px;
       padding: 6px 8px;
-      cursor: default;
+      cursor: pointer;
       transition: border-color 0.12s;
     }
     .unit-card:hover { border-color: var(--cad-muted); }
-    .unit-label { font-size: 13px; font-weight: 700; color: var(--cad-text); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .unit-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--cad-text);
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
     .unit-type { font-size: 10px; color: var(--cad-muted); margin-bottom: 4px; }
-    .unit-status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+    .unit-status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 4px;
+    }
     .status-available   .unit-status-dot { background: var(--unit-avail); }
     .status-assigned    .unit-status-dot { background: var(--unit-assigned); }
     .status-on_scene    .unit-status-dot { background: var(--unit-scene); }
     .status-unavailable .unit-status-dot { background: var(--unit-unavail); border: 1px solid #6b7280; }
-    .unit-status-text { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .unit-status-text {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
     .status-available   .unit-status-text { color: var(--unit-avail); }
     .status-assigned    .unit-status-text { color: var(--unit-assigned); }
     .status-on_scene    .unit-status-text { color: var(--unit-scene); }
     .status-unavailable .unit-status-text { color: var(--cad-muted); }
-    .unit-remove-btn {
-      float: right;
-      background: none;
-      border: none;
-      color: var(--cad-muted);
-      font-size: 10px;
-      cursor: pointer;
-      padding: 0;
-      line-height: 1;
-    }
-    .unit-remove-btn:hover { color: var(--cad-p1); }
-    .unit-status-select {
-      width: 100%;
-      background: var(--cad-bg);
-      border: 1px solid var(--cad-border);
-      color: var(--cad-text);
-      font-family: inherit;
-      font-size: 11px;
-      padding: 3px 5px;
-      border-radius: 2px;
-      margin-top: 4px;
-    }
 
     /* ── MODALS ── */
     .cad-modal-content {
@@ -394,8 +410,6 @@
       background: var(--cad-header);
       border-bottom: 1px solid var(--cad-border);
       padding: 10px 14px;
-      display: flex;
-      align-items: center;
     }
     .cad-modal-title {
       font-size: 12px;
@@ -456,19 +470,9 @@
       border-radius: 3px;
       cursor: pointer;
     }
-    .cad-btn-warn {
-      background: transparent;
-      color: var(--cad-p2);
-      border: 1px solid var(--cad-p2);
-      font-family: inherit;
-      font-size: 12px;
-      padding: 7px 14px;
-      border-radius: 3px;
-      cursor: pointer;
-    }
 
     /* priority radio pills */
-    .priority-pills { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+    .priority-pills { display: flex; gap: 6px; margin-bottom: 10px; }
     .priority-pill input[type=radio] { display: none; }
     .priority-pill label {
       padding: 4px 12px;
@@ -484,38 +488,30 @@
     .priority-pill input[value="3"]:checked + label { background: var(--cad-p3); border-color: var(--cad-p3); color: #fff; }
     .priority-pill input[value="4"]:checked + label { background: var(--cad-p4); border-color: var(--cad-p4); color: #9ca3af; }
 
-    /* ── ROSTER MANAGER ── */
-    .roster-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 8px;
-      border: 1px solid var(--cad-border);
-      border-radius: 3px;
-      margin-bottom: 5px;
+    /* status change select */
+    .unit-status-select {
+      width: 100%;
       background: var(--cad-bg);
-    }
-    .roster-row .rr-label { flex: 1; font-size: 13px; }
-    .roster-type-badge {
-      font-size: 10px;
-      padding: 1px 6px;
+      border: 1px solid var(--cad-border);
+      color: var(--cad-text);
+      font-family: inherit;
+      font-size: 11px;
+      padding: 3px 5px;
       border-radius: 2px;
-      font-weight: 700;
+      margin-top: 4px;
     }
-    .type-officer   { background: #1e3a5f; color: #60a5fa; }
-    .type-volunteer { background: #1a3a1a; color: #4ade80; }
-    .type-staff     { background: #3a2a1a; color: #fbbf24; }
 
     /* ── MISC ── */
     .alert-flash {
       position: fixed;
-      top: 56px; right: 14px;
-      z-index: 9999;
+      top: 56px;
+      right: 14px;
+      z-index: 999;
       font-family: 'Courier New', monospace;
       font-size: 12px;
       padding: 8px 14px;
       border-radius: 3px;
-      animation: fadeout 3.5s forwards;
+      animation: fadeout 3s forwards;
     }
     @keyframes fadeout {
       0%   { opacity: 1; }
@@ -539,21 +535,99 @@
       padding: 1px 5px;
       border-radius: 2px;
     }
-    .svc-day-tag {
-      font-size: 10px;
-      font-weight: 700;
-      padding: 1px 6px;
-      border-radius: 2px;
-      letter-spacing: 1px;
-    }
-    .tag-sun { background: #1e3358; color: #93c5fd; }
-    .tag-wed { background: #1a2e1a; color: #86efac; }
-    .tag-both { background: #2a1e38; color: #c4b5fd; }
+
+    /* ══ LOGIN SCREEN ══ */
+    #login-screen{position:fixed;inset:0;background:var(--cad-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;}
+    .login-box{background:var(--cad-panel);border:1px solid var(--cad-border);border-radius:6px;padding:36px 40px;width:340px;text-align:center;}
+    .login-brand{font-size:18px;font-weight:700;color:var(--cad-accent);letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;}
+    .login-sub{font-size:11px;color:var(--cad-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:28px;}
+    .login-tab-row{display:flex;border:1px solid var(--cad-border);border-radius:3px;overflow:hidden;margin-bottom:20px;}
+    .login-tab{flex:1;background:var(--cad-bg);border:none;color:var(--cad-muted);font-family:inherit;font-size:11px;font-weight:700;letter-spacing:1px;padding:7px;cursor:pointer;}
+    .login-tab.active{background:var(--cad-accent);color:#000;}
+    #pin-display{display:flex;justify-content:center;gap:10px;margin-bottom:20px;}
+    .pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--cad-border);background:transparent;transition:background .1s,border-color .1s;}
+    .pin-dot.filled{background:var(--cad-accent);border-color:var(--cad-accent);}
+    .pin-dot.error{background:var(--cad-p1);border-color:var(--cad-p1);}
+    #pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+    .pin-btn{background:var(--cad-header);border:1px solid var(--cad-border);color:var(--cad-text);font-family:inherit;font-size:18px;font-weight:700;padding:14px;border-radius:4px;cursor:pointer;}
+    .pin-btn:hover{background:var(--cad-border);}
+    .pin-btn:active{background:var(--cad-accent);color:#000;}
+    .pin-btn.wide{grid-column:span 2;font-size:13px;padding:12px;}
+    .pin-btn.clear{grid-column:3;font-size:13px;}
+    #admin-form{display:none;text-align:left;}
+    .login-error{font-size:11px;color:var(--cad-p1);margin-top:8px;min-height:16px;text-align:center;}
+    .login-input{width:100%;background:var(--cad-bg);border:1px solid var(--cad-border);color:var(--cad-text);font-family:inherit;font-size:13px;padding:8px 10px;border-radius:3px;margin-bottom:10px;}
+    .login-input:focus{outline:none;border-color:var(--cad-accent);}
+    .login-submit{width:100%;background:var(--cad-accent);border:none;color:#000;font-family:inherit;font-size:13px;font-weight:700;padding:10px;border-radius:3px;cursor:pointer;letter-spacing:1px;}
+    /* session info */
+    #session-info{font-size:10px;color:var(--cad-muted);white-space:nowrap;letter-spacing:.5px;}
+    .role-tag{color:var(--cad-accent);font-weight:700;}
+    .admin-tag{color:#fbbf24;}
+    /* admin settings panel */
+    #admin-settings-panel{display:none;position:fixed;top:var(--topbar-h);right:0;width:320px;bottom:var(--bottom-h);background:var(--cad-panel);border-left:1px solid var(--cad-border);z-index:90;flex-direction:column;overflow:hidden;}
+    #admin-settings-panel.open{display:flex;}
+    .settings-section{padding:14px;border-bottom:1px solid var(--cad-border);}
+    .settings-section-title{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--cad-accent);font-weight:700;margin-bottom:12px;}
+    .passcode-input-row{display:flex;gap:6px;margin-bottom:10px;}
+    .passcode-digit{width:52px;height:52px;background:var(--cad-bg);border:1px solid var(--cad-border);color:var(--cad-text);font-family:inherit;font-size:22px;font-weight:700;text-align:center;border-radius:4px;}
+    .passcode-digit:focus{outline:none;border-color:var(--cad-accent);}
+    #cad-board{display:none;}
   </style>
 </head>
 <body>
 
-<!-- ══════════════════ TOP BAR ══════════════════ -->
+<!-- ══════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-brand"><i class="bi bi-shield-fill me-2"></i>SecureCAD</div>
+    <div class="login-sub">Biltmore Church Security Operations</div>
+    <div class="login-tab-row">
+      <button class="login-tab active" id="tab-soc" onclick="switchLoginTab('soc')">SOC ACCESS</button>
+      <button class="login-tab" id="tab-admin" onclick="switchLoginTab('admin')">ADMIN</button>
+    </div>
+    <div id="soc-form">
+      <div id="pin-display">
+        <div class="pin-dot" id="dot-0"></div>
+        <div class="pin-dot" id="dot-1"></div>
+        <div class="pin-dot" id="dot-2"></div>
+        <div class="pin-dot" id="dot-3"></div>
+      </div>
+      <div id="pin-pad">
+        <button class="pin-btn" onclick="pinPress('1')">1</button>
+        <button class="pin-btn" onclick="pinPress('2')">2</button>
+        <button class="pin-btn" onclick="pinPress('3')">3</button>
+        <button class="pin-btn" onclick="pinPress('4')">4</button>
+        <button class="pin-btn" onclick="pinPress('5')">5</button>
+        <button class="pin-btn" onclick="pinPress('6')">6</button>
+        <button class="pin-btn" onclick="pinPress('7')">7</button>
+        <button class="pin-btn" onclick="pinPress('8')">8</button>
+        <button class="pin-btn" onclick="pinPress('9')">9</button>
+        <button class="pin-btn wide" onclick="pinPress('0')">0</button>
+        <button class="pin-btn clear" onclick="pinClear()"><i class="bi bi-delete"></i></button>
+      </div>
+      <div class="login-error" id="pin-error"></div>
+    </div>
+    <div id="admin-form">
+      <label class="cad-label" style="text-align:left;">Username</label>
+      <input type="text" class="login-input" id="admin-username" autocomplete="off" />
+      <label class="cad-label" style="text-align:left;">Password</label>
+      <input type="password" class="login-input" id="admin-password" onkeydown="if(event.key==='Enter')submitAdminLogin()" />
+      <button class="login-submit" onclick="submitAdminLogin()">SIGN IN</button>
+      <div class="login-error" id="admin-error"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     CAD BOARD
+══════════════════════════════════════ -->
+<div id="cad-board">
+
+<!-- ══════════════════════════════════════
+     TOP BAR
+══════════════════════════════════════ -->
 <div id="topbar">
   <div class="brand"><i class="bi bi-shield-fill me-1"></i> SecureCAD</div>
 
@@ -561,29 +635,27 @@
     <option value="">— Select Campus —</option>
   </select>
 
-  <!-- Service Day Toggle -->
-  <div class="svc-toggle">
-    <button id="btn-sun" class="active" onclick="setServiceDay('sunday')">SUN</button>
-    <button id="btn-wed" onclick="setServiceDay('wednesday')">WED</button>
-  </div>
-
-  <div class="stat-pill">Active: <span id="stat-active">0</span></div>
-  <div class="stat-pill">Available: <span id="stat-avail">0</span></div>
-  <div class="stat-pill">On Scene: <span id="stat-scene">0</span></div>
+  <div class="stat-pill">Active Incidents: <span id="stat-active">0</span></div>
+  <div class="stat-pill">Units Available: <span id="stat-avail">0</span></div>
 
   <button class="cad-btn-primary" style="font-size:11px; padding:4px 12px;" onclick="openNewIncident()">
     <i class="bi bi-plus-lg me-1"></i> New Incident
   </button>
 
-  <button class="cad-btn-secondary" style="font-size:11px; padding:4px 10px;" onclick="openRosterManager()" title="Manage Roster Templates">
-    <i class="bi bi-people-fill me-1"></i> Roster
-  </button>
-
+  <button id="admin-settings-btn" style="display:none;font-size:11px;padding:4px 10px;" class="cad-btn-secondary" onclick="toggleAdminSettings()"><i class="bi bi-gear-fill me-1"></i>Settings</button>
+  <div id="session-info">
+    <span class="role-tag" id="role-display">SOC</span>
+    <span style="margin:0 4px;">|</span>
+    <span id="session-time"></span>
+    <button onclick="logout()" style="background:none;border:none;color:var(--cad-muted);font-family:inherit;font-size:10px;cursor:pointer;margin-left:6px;padding:0;"><i class="bi bi-box-arrow-right"></i> LOCK</button>
+  </div>
   <span id="conn-badge" class="badge bg-secondary">Connecting...</span>
   <div id="clock">--:--:--</div>
 </div>
 
-<!-- ══════════════════ MAIN BODY ══════════════════ -->
+<!-- ══════════════════════════════════════
+     MAIN BODY (3 panels)
+══════════════════════════════════════ -->
 <div id="main-body">
 
   <!-- LEFT: Incident Queue -->
@@ -605,23 +677,21 @@
     <div class="panel-header">
       <i class="bi bi-map"></i> Campus Map
       <span id="map-campus-label" style="color:var(--cad-text); margin-left:6px; font-weight:400; font-size:12px;"></span>
-      <span id="map-pin-hint" style="margin-left:auto; font-size:10px; color:var(--cad-muted); display:none;">
-        <i class="bi bi-crosshair me-1"></i>Click map to place incident pin
-      </span>
     </div>
     <div class="panel-body" style="padding:0; position:relative;">
       <div id="map-container">
-        <div id="map-placeholder" style="text-align:center; color:var(--cad-muted);">
-          <i class="bi bi-map" style="font-size:48px; display:block; margin-bottom:12px; color:var(--cad-border);"></i>
-          <span style="font-size:13px;">No map uploaded for this campus</span><br>
+        <div id="map-placeholder">
+          <i class="bi bi-map"></i>
+          <span style="font-size:13px;">No map uploaded for this campus</span>
+          <br>
           <span style="font-size:11px; margin-top:6px; display:block;">Upload a floor plan or satellite image below</span>
         </div>
-        <img id="map-img" src="" alt="Campus Map" onclick="onMapClick(event)" style="cursor:crosshair; display:none; max-width:100%; max-height:100%; object-fit:contain;" />
-        <div id="map-overlay" style="position:absolute; top:0; left:0; right:0; bottom:0; pointer-events:none;"></div>
+        <img id="map-img" src="" alt="Campus Map" onclick="onMapClick(event)" style="cursor:crosshair;" />
+        <div id="map-overlay"></div>
         <button id="map-upload-btn" onclick="document.getElementById('map-file-input').click()">
           <i class="bi bi-upload me-1"></i> Upload Map
         </button>
-        <input type="file" id="map-file-input" accept="image/*" onchange="handleMapUpload(event)" style="display:none;" />
+        <input type="file" id="map-file-input" accept="image/*" onchange="handleMapUpload(event)" />
       </div>
     </div>
   </div>
@@ -631,10 +701,8 @@
     <div class="panel-header">
       <i class="bi bi-file-text"></i> Incident Detail
       <span id="detail-inc-number" style="color:var(--cad-text); font-weight:400; margin-left:6px; font-size:11px;"></span>
-      <div id="detail-action-btns" style="margin-left:auto; display:none; gap:6px; align-items:center;">
-        <button class="cad-btn-danger" style="padding:2px 8px; font-size:10px;" onclick="closeSelectedIncident()">
-          <i class="bi bi-x-circle me-1"></i>Close
-        </button>
+      <div id="detail-action-btns" style="margin-left:auto; display:none; gap:6px;">
+        <button class="cad-btn-danger" style="padding:2px 8px; font-size:10px;" onclick="closeSelectedIncident()">Close</button>
       </div>
     </div>
     <div class="panel-body" id="detail-body">
@@ -651,23 +719,13 @@
 
 </div>
 
-<!-- ══════════════════ BOTTOM: Unit Bar ══════════════════ -->
+<!-- ══════════════════════════════════════
+     BOTTOM: Unit Status Bar
+══════════════════════════════════════ -->
 <div id="bottom-bar">
   <div class="bar-header">
     <i class="bi bi-people-fill"></i> Unit Status Board
     <span id="unit-campus-label" style="color:var(--cad-text); font-weight:400; font-size:11px;"></span>
-    <span id="svc-day-tag" class="svc-day-tag tag-sun ms-1">SUNDAY</span>
-
-    <!-- Load Roster button -->
-    <button id="btn-load-roster" class="cad-btn-primary ms-2" style="padding:2px 10px; font-size:10px; display:none;" onclick="loadRoster()">
-      <i class="bi bi-people-fill me-1"></i> Load Roster
-    </button>
-
-    <!-- Clear Service button -->
-    <button id="btn-clear-service" class="cad-btn-warn ms-1" style="padding:2px 10px; font-size:10px; display:none;" onclick="confirmClearService()">
-      <i class="bi bi-stop-circle me-1"></i> Clear Service
-    </button>
-
     <button class="cad-btn-secondary ms-auto" style="padding:2px 8px; font-size:10px;" onclick="openAddUnit()">
       <i class="bi bi-plus"></i> Add Unit
     </button>
@@ -677,23 +735,65 @@
   </div>
 </div>
 
-<!-- ══════════════════ NEW INCIDENT MODAL ══════════════════ -->
+
+<!-- ADMIN SETTINGS PANEL -->
+<div id="admin-settings-panel">
+  <div class="panel-header" style="background:var(--cad-header);">
+    <i class="bi bi-gear-fill" style="color:#fbbf24;"></i>
+    <span style="color:#fbbf24;">Admin Settings</span>
+    <button onclick="toggleAdminSettings()" style="margin-left:auto;background:none;border:none;color:var(--cad-muted);cursor:pointer;font-size:16px;"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <div style="overflow-y:auto;flex:1;">
+    <div class="settings-section">
+      <div class="settings-section-title"><i class="bi bi-key-fill me-1"></i> SOC Passcode</div>
+      <div style="font-size:11px;color:var(--cad-muted);margin-bottom:12px;">Enter a new 4-digit code to replace the current SOC passcode.</div>
+      <label class="cad-label">New Passcode</label>
+      <div class="passcode-input-row">
+        <input type="password" inputmode="numeric" maxlength="1" class="passcode-digit" id="pc0" oninput="pcAdvance(0)" />
+        <input type="password" inputmode="numeric" maxlength="1" class="passcode-digit" id="pc1" oninput="pcAdvance(1)" onkeydown="pcBack(event,1)" />
+        <input type="password" inputmode="numeric" maxlength="1" class="passcode-digit" id="pc2" oninput="pcAdvance(2)" onkeydown="pcBack(event,2)" />
+        <input type="password" inputmode="numeric" maxlength="1" class="passcode-digit" id="pc3" oninput="pcAdvance(3)" onkeydown="pcBack(event,3)" />
+      </div>
+      <label class="cad-label">Confirm Passcode</label>
+      <div class="passcode-input-row">
+        <input type="password" inputmode="numeric" maxlength="1" class="passcode-digit" id="pc4" oninput="pcAdvance(4)" onkeydown="pcBack(event,4)" />
+        <input type="password" inputmode="numeric" maxlength="1" class="passcode-digit" id="pc5" oninput="pcAdvance(5)" onkeydown="pcBack(event,5)" />
+        <input type="password" inputmode="numeric" maxlength="1" class="passcode-digit" id="pc6" oninput="pcAdvance(6)" onkeydown="pcBack(event,6)" />
+        <input type="password" inputmode="numeric" maxlength="1" class="passcode-digit" id="pc7" oninput="pcAdvance(7)" onkeydown="pcBack(event,7)" />
+      </div>
+      <div id="pc-error" style="font-size:11px;color:var(--cad-p1);margin-bottom:8px;min-height:16px;"></div>
+      <button class="cad-btn-primary" style="width:100%;" onclick="saveNewPasscode()"><i class="bi bi-check-lg me-1"></i>Save New Passcode</button>
+    </div>
+    <div class="settings-section">
+      <div class="settings-section-title"><i class="bi bi-clock-history me-1"></i> Current Session</div>
+      <div style="font-size:12px;color:var(--cad-muted);">Role: <span style="color:#fbbf24;font-weight:700;">ADMIN</span><br>Logged in: <span id="admin-login-time" style="color:var(--cad-text);"></span></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end #cad-board -->
+<!-- ══════════════════════════════════════
+     NEW INCIDENT MODAL
+══════════════════════════════════════ -->
 <div class="modal fade" id="newIncidentModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content cad-modal-content">
       <div class="cad-modal-header">
         <span class="cad-modal-title"><i class="bi bi-exclamation-triangle me-2"></i>New Incident</span>
-        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close btn-close-white" style="margin-left:auto;" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body" style="padding:14px;">
+
         <label class="cad-label">Campus</label>
-        <select class="cad-input" id="inc-campus" onchange="populateCallTypes()">
+        <select class="cad-input" id="inc-campus" style="margin-bottom:10px;" onchange="populateCallTypes()">
           <option value="">— Select —</option>
         </select>
+
         <label class="cad-label">Call Type</label>
         <select class="cad-input" id="inc-calltype" onchange="autoSetPriority()">
           <option value="">— Select —</option>
         </select>
+
         <label class="cad-label">Priority</label>
         <div class="priority-pills">
           <div class="priority-pill"><input type="radio" name="inc-priority" id="p1" value="1"><label for="p1">P1 — CRITICAL</label></div>
@@ -701,8 +801,10 @@
           <div class="priority-pill"><input type="radio" name="inc-priority" id="p3" value="3" checked><label for="p3">P3 — ROUTINE</label></div>
           <div class="priority-pill"><input type="radio" name="inc-priority" id="p4" value="4"><label for="p4">P4 — ADMIN</label></div>
         </div>
+
         <label class="cad-label">Location / Description</label>
         <input type="text" class="cad-input" id="inc-location" placeholder="e.g. Main Lobby, Parking Lot C, Room 201" />
+
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
           <div>
             <label class="cad-label">Caller Name</label>
@@ -713,8 +815,10 @@
             <input type="text" class="cad-input" id="inc-caller-contact" placeholder="Optional" />
           </div>
         </div>
+
         <label class="cad-label">Initial Note</label>
         <textarea class="cad-input" id="inc-note" rows="2" placeholder="Initial observations or caller statement..."></textarea>
+
       </div>
       <div class="modal-footer" style="background:var(--cad-header); border-top:1px solid var(--cad-border); padding:10px 14px; gap:8px;">
         <button class="cad-btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -724,24 +828,28 @@
   </div>
 </div>
 
-<!-- ══════════════════ ADD UNIT MODAL ══════════════════ -->
+<!-- ══════════════════════════════════════
+     ADD UNIT MODAL
+══════════════════════════════════════ -->
 <div class="modal fade" id="addUnitModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content cad-modal-content">
       <div class="cad-modal-header">
         <span class="cad-modal-title"><i class="bi bi-person-plus me-2"></i>Add Unit</span>
-        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close btn-close-white" style="margin-left:auto;" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body" style="padding:14px;">
         <label class="cad-label">Campus</label>
         <select class="cad-input" id="unit-campus-select"></select>
-        <label class="cad-label">Last Name</label>
-        <input type="text" class="cad-input" id="unit-label" placeholder="e.g. Smith, Johnson" />
+
+        <label class="cad-label">Unit Label</label>
+        <input type="text" class="cad-input" id="unit-label" placeholder="e.g. Alpha-1, Officer Smith" />
+
         <label class="cad-label">Type</label>
         <select class="cad-input" id="unit-type">
-          <option value="officer">Hired Officer</option>
           <option value="volunteer">Volunteer</option>
-          <option value="staff">Staff</option>
+          <option value="officer">Hired Officer</option>
+          <option value="admin">Admin / Supervisor</option>
         </select>
       </div>
       <div class="modal-footer" style="background:var(--cad-header); border-top:1px solid var(--cad-border); padding:10px 14px; gap:8px;">
@@ -752,128 +860,235 @@
   </div>
 </div>
 
-<!-- ══════════════════ ROSTER MANAGER MODAL ══════════════════ -->
-<div class="modal fade" id="rosterModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content cad-modal-content">
-      <div class="cad-modal-header">
-        <span class="cad-modal-title"><i class="bi bi-people-fill me-2"></i>Roster Template Manager</span>
-        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body" style="padding:14px;">
-        <!-- Campus + Day filters -->
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
-          <div>
-            <label class="cad-label">Campus</label>
-            <select class="cad-input" id="rm-campus" onchange="renderRosterList()" style="margin-bottom:0;"></select>
-          </div>
-          <div>
-            <label class="cad-label">Service Day</label>
-            <select class="cad-input" id="rm-day" onchange="renderRosterList()" style="margin-bottom:0;">
-              <option value="sunday">Sunday</option>
-              <option value="wednesday">Wednesday</option>
-              <option value="both">Both Days</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Current roster list -->
-        <div class="divider-label">Current Template</div>
-        <div id="rm-list" style="min-height:80px; margin-bottom:12px;"></div>
-
-        <!-- Add entry form -->
-        <div class="divider-label">Add to Template</div>
-        <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:8px; align-items:end;">
-          <div>
-            <label class="cad-label">Last Name</label>
-            <input type="text" class="cad-input" id="rm-name" placeholder="Smith" style="margin-bottom:0;" />
-          </div>
-          <div>
-            <label class="cad-label">Type</label>
-            <select class="cad-input" id="rm-type" style="margin-bottom:0;">
-              <option value="officer">Hired Officer</option>
-              <option value="volunteer">Volunteer</option>
-              <option value="staff">Staff</option>
-            </select>
-          </div>
-          <div>
-            <button class="cad-btn-primary" style="padding:6px 14px; white-space:nowrap;" onclick="addRosterEntry()">
-              <i class="bi bi-plus-lg me-1"></i> Add
-            </button>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer" style="background:var(--cad-header); border-top:1px solid var(--cad-border); padding:10px 14px; gap:8px;">
-        <span style="font-size:11px; color:var(--cad-muted); margin-right:auto;">Changes save automatically</span>
-        <button class="cad-btn-secondary" data-bs-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════ SCRIPTS ══════════════════ -->
+<!-- Bootstrap 5 JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Supabase JS (CDN) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
 <script>
-/* ─── CONFIGURATION ─── */
+
+/* ════════════════════════════════════════════════
+   ⚙️  CONFIGURATION — EDIT BEFORE PUSHING
+   ════════════════════════════════════════════════
+   ADMIN_USERNAME  → username typed at Admin login tab
+   ADMIN_PASSWORD  → password typed at Admin login tab
+   These are never stored in Supabase or sent anywhere.
+   SOC 4-digit passcode lives in Supabase (settings table).
+   Set it there once, then change it from the Admin Settings panel.
+   ════════════════════════════════════════════════ */
+const ADMIN_USERNAME = 'checkpoint';  // ← replace before pushing
+const ADMIN_PASSWORD = 'Biltmore123!';  // ← replace before pushing
+
 const SUPABASE_URL  = 'https://elgofpbkejgmtwndeumu.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsZ29mcGJrZWpnbXR3bmRldW11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxODIzMzksImV4cCI6MjA4OTc1ODMzOX0.0KUluuQ39Qu2UYJTIIf-7whodajONjNrFv9NuyQcUuE';
 
-/* ─── INIT ─── */
+/* ══════════════════════════════════
+   INIT
+══════════════════════════════════ */
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON);
 
 let state = {
-  campuses:         [],
-  callTypes:        [],
-  units:            [],
-  incidents:        [],
-  incidentLogs:     {},
-  rosterTemplates:  [],   // flat array of roster_template_units rows
-  selectedCampus:   null,
+  campuses:       [],
+  callTypes:      [],
+  units:          [],
+  incidents:      [],
+  incidentLogs:   {},
+  selectedCampus: null,
   selectedIncident: null,
-  serviceDay:       'sunday',
-  operator:         'SOC'
+  mapImageUrl:    null,
+  session: null
 };
 
-/* ─── CLOCK ─── */
+/* ══════════════════════════════════
+   CLOCK
+══════════════════════════════════ */
 function tickClock() {
+  const now = new Date();
   document.getElementById('clock').textContent =
-    new Date().toLocaleTimeString('en-US', { hour12: false });
+    now.toLocaleTimeString('en-US', { hour12: false });
 }
 setInterval(tickClock, 1000);
 tickClock();
 
-/* ─── SERVICE DAY ─── */
-function setServiceDay(day) {
-  state.serviceDay = day;
-  document.getElementById('btn-sun').classList.toggle('active', day === 'sunday');
-  document.getElementById('btn-wed').classList.toggle('active', day === 'wednesday');
-  const tag = document.getElementById('svc-day-tag');
-  tag.textContent = day === 'sunday' ? 'SUNDAY' : 'WEDNESDAY';
-  tag.className = 'svc-day-tag ms-1 ' + (day === 'sunday' ? 'tag-sun' : 'tag-wed');
+/* ════════════════════════════════════════════════
+   LOGIN
+════════════════════════════════════════════════ */
+let pinEntry = '';
+
+function switchLoginTab(tab) {
+  document.getElementById('tab-soc').classList.toggle('active', tab==='soc');
+  document.getElementById('tab-admin').classList.toggle('active', tab==='admin');
+  document.getElementById('soc-form').style.display   = tab==='soc'   ? 'block' : 'none';
+  document.getElementById('admin-form').style.display = tab==='admin' ? 'block' : 'none';
+  pinEntry=''; updatePinDisplay();
+  document.getElementById('pin-error').textContent='';
+  document.getElementById('admin-error').textContent='';
+}
+function pinPress(d) { if(pinEntry.length>=4)return; pinEntry+=d; updatePinDisplay(); if(pinEntry.length===4)setTimeout(checkPin,120); }
+function pinClear() { pinEntry=pinEntry.slice(0,-1); updatePinDisplay(); }
+function updatePinDisplay() {
+  for(let i=0;i<4;i++){const dot=document.getElementById('dot-'+i);dot.classList.toggle('filled',i<pinEntry.length);dot.classList.remove('error');}
+}
+async function checkPin() {
+  const {data,error}=await db.from('settings').select('value').eq('key','soc_passcode').single();
+  if(error||!data){showPinError('Cannot verify. Check DB.');return;}
+  if(pinEntry===data.value){startSession('soc');}
+  else{for(let i=0;i<4;i++)document.getElementById('dot-'+i).classList.add('error');setTimeout(()=>{pinEntry='';updatePinDisplay();document.getElementById('pin-error').textContent='Incorrect passcode.';},500);}
+}
+function showPinError(msg){document.getElementById('pin-error').textContent=msg;pinEntry='';setTimeout(updatePinDisplay,500);}
+function submitAdminLogin() {
+  const u=document.getElementById('admin-username').value.trim();
+  const p=document.getElementById('admin-password').value;
+  if(u===ADMIN_USERNAME&&p===ADMIN_PASSWORD){startSession('admin');}
+  else{document.getElementById('admin-error').textContent='Invalid credentials.';document.getElementById('admin-password').value='';}
+}
+function startSession(role) {
+  state.session={role,loginTime:new Date()};
+  sessionStorage.setItem('cad_session',JSON.stringify(state.session));
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('cad-board').style.display='block';
+  const isAdmin=role==='admin';
+  document.getElementById('admin-settings-btn').style.display=isAdmin?'inline-block':'none';
+  const roleEl=document.getElementById('role-display');
+  roleEl.textContent=isAdmin?'ADMIN':'SOC';
+  roleEl.className='role-tag'+(isAdmin?' admin-tag':'');
+  document.getElementById('admin-login-time').textContent=state.session.loginTime.toLocaleTimeString('en-US',{hour12:false});
+  boot(); updateSessionClock(); setInterval(updateSessionClock,60000);
+}
+function updateSessionClock(){
+  if(!state.session)return;
+  const d=Math.floor((Date.now()-new Date(state.session.loginTime))/60000);
+  document.getElementById('session-time').textContent=d<60?d+'m':Math.floor(d/60)+'h '+(d%60)+'m';
+}
+function logout(){
+  sessionStorage.removeItem('cad_session');
+  state.session=null;state.selectedCampus=null;state.selectedIncident=null;
+  pinEntry='';updatePinDisplay();
+  document.getElementById('pin-error').textContent='';
+  document.getElementById('admin-username').value='';
+  document.getElementById('admin-password').value='';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('cad-board').style.display='none';
+  document.getElementById('admin-settings-panel').classList.remove('open');
+  switchLoginTab('soc');
+}
+(function(){
+  const saved=sessionStorage.getItem('cad_session');
+  if(saved){try{const s=JSON.parse(saved);s.loginTime=new Date(s.loginTime);if(s.role){state.session=s;startSession(s.role);return;}}catch(e){}}
+})();
+
+/* ════════════════════════════════════════════════
+   ADMIN SETTINGS
+════════════════════════════════════════════════ */
+function toggleAdminSettings(){document.getElementById('admin-settings-panel').classList.toggle('open');}
+function pcAdvance(idx){const inputs=document.querySelectorAll('.passcode-digit');if(!/^\d$/.test(inputs[idx].value)){inputs[idx].value='';return;}if(idx<inputs.length-1)inputs[idx+1].focus();}
+function pcBack(e,idx){if(e.key==='Backspace'){const inputs=document.querySelectorAll('.passcode-digit');if(!inputs[idx].value&&idx>0){inputs[idx-1].value='';inputs[idx-1].focus();}}}
+async function saveNewPasscode(){
+  const inputs=document.querySelectorAll('.passcode-digit');
+  const newCode=[0,1,2,3].map(i=>inputs[i].value).join('');
+  const confCode=[4,5,6,7].map(i=>inputs[i].value).join('');
+  const errEl=document.getElementById('pc-error');
+  if(newCode.length<4||confCode.length<4){errEl.textContent='Enter all 4 digits in both fields.';return;}
+  if(newCode!==confCode){errEl.textContent='Passcodes do not match.';return;}
+  if(!/^\d{4}$/.test(newCode)){errEl.textContent='Digits only.';return;}
+  errEl.textContent='';
+  const {error}=await db.from('settings').upsert({key:'soc_passcode',value:newCode},{onConflict:'key'});
+  if(error){errEl.textContent='Save failed: '+error.message;return;}
+  inputs.forEach(i=>i.value='');
+  showAlert('SOC passcode updated.','success');
 }
 
-/* ─── BOOT ─── */
+/* ══════════════════════════════════
+   CONNECTION TEST + BOOT
+══════════════════════════════════ */
 async function boot() {
   const badge = document.getElementById('conn-badge');
+
+  if (SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE') {
+    badge.className = 'badge bg-warning text-dark';
+    badge.textContent = 'NOT CONFIGURED';
+    loadDemoData();
+    return;
+  }
+
   try {
     const { error } = await db.from('campuses').select('id').limit(1);
     if (error) throw error;
     badge.className = 'badge bg-success';
     badge.textContent = 'CONNECTED';
-    await Promise.all([loadCampuses(), loadCallTypes(), loadRosterTemplates()]);
+    await loadCampuses();
+    await loadCallTypes();
     subscribeRealtime();
   } catch (e) {
     badge.className = 'badge bg-danger';
     badge.textContent = 'DB ERROR';
-    console.error('Supabase error:', e.message);
-    showAlert('DB connection failed: ' + e.message, 'danger');
+    console.error('Supabase connection error:', e.message);
+    showAlert('Database connection failed. Check console. Running demo mode.', 'warning');
+    loadDemoData();
   }
 }
 
-/* ─── LOAD FROM SUPABASE ─── */
+/* ══════════════════════════════════
+   DEMO DATA (runs when not configured)
+══════════════════════════════════ */
+function loadDemoData() {
+  state.campuses = [
+    { id: 1, name: 'Main Campus',   map_image_url: null },
+    { id: 2, name: 'North Campus',  map_image_url: null },
+    { id: 3, name: 'South Campus',  map_image_url: null },
+    { id: 4, name: 'West Campus',   map_image_url: null }
+  ];
+  state.callTypes = [
+    { id:1, code:'DOMV',    description:'Domestic Disturbance',  default_priority:1, category:'law' },
+    { id:2, code:'ALARM',   description:'Burglary Alarm',         default_priority:2, category:'law' },
+    { id:3, code:'WELCHK',  description:'Welfare Check',          default_priority:3, category:'law' },
+    { id:4, code:'SUSPP',   description:'Suspicious Person',      default_priority:3, category:'law' },
+    { id:5, code:'ASSAULT', description:'Assault',                default_priority:1, category:'law' },
+    { id:6, code:'MEDP1',   description:'Medical Emergency',      default_priority:1, category:'medical' },
+    { id:7, code:'CHESTP',  description:'Chest Pain',             default_priority:2, category:'medical' },
+    { id:8, code:'FIRESTR', description:'Structure Fire',         default_priority:1, category:'fire' },
+    { id:9, code:'ACCINJ',  description:'Accident with Injuries', default_priority:1, category:'law' },
+    { id:10,code:'THEFT',   description:'Theft Report',           default_priority:3, category:'law' },
+    { id:11,code:'DISRUPT', description:'Service Disruption',     default_priority:2, category:'law' },
+    { id:12,code:'CHILD',   description:'Lost/Missing Child',     default_priority:1, category:'law' },
+    { id:13,code:'ADMIN',   description:'Administrative',         default_priority:4, category:'admin' }
+  ];
+  state.units = [
+    { id:1, campus_id:1, unit_label:'Alpha-1',      unit_type:'officer',   status:'available' },
+    { id:2, campus_id:1, unit_label:'Alpha-2',      unit_type:'volunteer', status:'available' },
+    { id:3, campus_id:1, unit_label:'Bravo-1',      unit_type:'volunteer', status:'on_scene'  },
+    { id:4, campus_id:1, unit_label:'Sgt. Harris',  unit_type:'officer',   status:'assigned'  },
+    { id:5, campus_id:2, unit_label:'North-1',      unit_type:'volunteer', status:'available' },
+    { id:6, campus_id:2, unit_label:'North-2',      unit_type:'officer',   status:'available' }
+  ];
+  state.incidents = [
+    { id:1, campus_id:1, incident_number:'INC-001', created_at: new Date(Date.now()-1800000).toISOString(), priority:1, call_type:'ASSAULT', location_description:'Parking Lot B', status:'active', caller_name:'John Doe', caller_contact:'828-555-0100', pin_x:35, pin_y:60 },
+    { id:2, campus_id:1, incident_number:'INC-002', created_at: new Date(Date.now()-600000).toISOString(),  priority:3, call_type:'SUSPP',   location_description:'Main Lobby',   status:'active', caller_name:'', caller_contact:'', pin_x:55, pin_y:40 },
+    { id:3, campus_id:2, incident_number:'INC-003', created_at: new Date(Date.now()-300000).toISOString(),  priority:2, call_type:'ALARM',   location_description:'Fellowship Hall', status:'active', caller_name:'', caller_contact:'', pin_x:null, pin_y:null }
+  ];
+  state.incidentLogs = {
+    1: [
+      { id:1, incident_id:1, entry_text:'Incident created. Caller reports physical altercation in parking lot.', entered_by:'Operator', entered_at: new Date(Date.now()-1800000).toISOString() },
+      { id:2, incident_id:1, entry_text:'Alpha-1 dispatched to scene.', entered_by:'Operator', entered_at: new Date(Date.now()-1750000).toISOString() }
+    ],
+    2: [
+      { id:3, incident_id:2, entry_text:'Incident created. Individual observed at main entrance, acting unusual.', entered_by:'Operator', entered_at: new Date(Date.now()-600000).toISOString() }
+    ],
+    3: [
+      { id:4, incident_id:3, entry_text:'Alarm sounding in fellowship hall. Cause unknown.', entered_by:'Operator', entered_at: new Date(Date.now()-300000).toISOString() }
+    ]
+  };
+  renderCampusDropdowns();
+  // default to first campus
+  document.getElementById('campus-select').value = 1;
+  onCampusChange();
+}
+
+/* ══════════════════════════════════
+   LOAD FROM SUPABASE
+══════════════════════════════════ */
 async function loadCampuses() {
   const { data, error } = await db.from('campuses').select('*').eq('is_active', true).order('name');
   if (!error) { state.campuses = data; renderCampusDropdowns(); }
@@ -883,8 +1098,8 @@ async function loadCallTypes() {
   if (!error) state.callTypes = data;
 }
 async function loadUnits(campusId) {
-  const { data, error } = await db.from('units').select('*').eq('campus_id', campusId).order('unit_type').order('unit_label');
-  if (!error) { state.units = data; renderUnits(); updateStats(); }
+  const { data, error } = await db.from('units').select('*').eq('campus_id', campusId).order('unit_label');
+  if (!error) { state.units = data; renderUnits(); }
 }
 async function loadIncidents(campusId) {
   const { data, error } = await db.from('incidents').select('*').eq('campus_id', campusId).eq('status','active').order('priority').order('created_at');
@@ -894,14 +1109,12 @@ async function loadLog(incidentId) {
   const { data, error } = await db.from('incident_log').select('*').eq('incident_id', incidentId).order('entered_at');
   if (!error) { state.incidentLogs[incidentId] = data; renderDetailLog(); }
 }
-async function loadRosterTemplates() {
-  const { data, error } = await db.from('roster_template_units').select('*').order('unit_type').order('unit_label');
-  if (!error) state.rosterTemplates = data;
-}
 
-/* ─── REALTIME ─── */
+/* ══════════════════════════════════
+   REALTIME SUBSCRIPTIONS
+══════════════════════════════════ */
 function subscribeRealtime() {
-  db.channel('cad-live')
+  db.channel('incidents-channel')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'incidents' }, () => {
       if (state.selectedCampus) loadIncidents(state.selectedCampus.id);
     })
@@ -914,14 +1127,12 @@ function subscribeRealtime() {
       state.incidentLogs[row.incident_id].push(row);
       if (state.selectedIncident && state.selectedIncident.id === row.incident_id) renderDetailLog();
     })
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'roster_template_units' }, async () => {
-      await loadRosterTemplates();
-      renderRosterList();
-    })
     .subscribe();
 }
 
-/* ─── CAMPUS CHANGE ─── */
+/* ══════════════════════════════════
+   CAMPUS CHANGE
+══════════════════════════════════ */
 function onCampusChange() {
   const id = parseInt(document.getElementById('campus-select').value);
   state.selectedCampus = state.campuses.find(c => c.id === id) || null;
@@ -930,65 +1141,61 @@ function onCampusChange() {
   document.getElementById('map-campus-label').textContent = state.selectedCampus ? state.selectedCampus.name : '';
   document.getElementById('unit-campus-label').textContent = state.selectedCampus ? '— ' + state.selectedCampus.name : '';
 
-  const hasRoster = state.selectedCampus ? getRosterForCampusDay(state.selectedCampus.id, state.serviceDay).length > 0 : false;
-  document.getElementById('btn-load-roster').style.display = (state.selectedCampus && hasRoster) ? 'inline-block' : 'none';
-  document.getElementById('btn-clear-service').style.display = 'none';
+  if (!state.selectedCampus) { renderQueue(); renderUnits(); return; }
 
-  if (!state.selectedCampus) { renderQueue(); renderUnits(); hideMap(); return; }
+  // Load map
+  if (state.selectedCampus.map_image_url) {
+    showMap(state.selectedCampus.map_image_url);
+  } else {
+    hideMap();
+  }
 
-  if (state.selectedCampus.map_image_url) showMap(state.selectedCampus.map_image_url);
-  else hideMap();
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+    loadUnits(state.selectedCampus.id);
+    loadIncidents(state.selectedCampus.id);
+  } else {
+    // demo: filter locally
+    renderUnits();
+    renderQueue();
+    renderPins();
+    updateStats();
+  }
 
-  loadUnits(state.selectedCampus.id);
-  loadIncidents(state.selectedCampus.id);
   clearDetailPanel();
 }
 
-/* ─── RENDER DROPDOWNS ─── */
+/* ══════════════════════════════════
+   RENDER CAMPUS DROPDOWNS
+══════════════════════════════════ */
 function renderCampusDropdowns() {
-  ['campus-select','inc-campus','unit-campus-select','rm-campus'].forEach(id => {
+  const selects = ['campus-select','inc-campus','unit-campus-select'];
+  selects.forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    const prev = el.value;
     el.innerHTML = '<option value="">— Select —</option>';
     state.campuses.forEach(c => {
-      el.innerHTML += `<option value="${c.id}">${escHtml(c.name)}</option>`;
+      el.innerHTML += `<option value="${c.id}">${c.name}</option>`;
     });
-    if (prev) el.value = prev;
   });
 }
 
-/* ─── UNIT BOARD ─── */
+/* ══════════════════════════════════
+   RENDER UNIT BOARD
+══════════════════════════════════ */
 function renderUnits() {
   const el = document.getElementById('units-scroll');
   const campusId = state.selectedCampus ? state.selectedCampus.id : null;
-  const units = campusId ? state.units.filter(u => u.campus_id === campusId) : [];
-
-  // Show/hide service controls based on whether units are loaded
-  const hasUnits = units.length > 0;
-  const hasRoster = campusId ? getRosterForCampusDay(campusId, state.serviceDay).length > 0 : false;
-  document.getElementById('btn-load-roster').style.display = (campusId && hasRoster && !hasUnits) ? 'inline-block' : 'none';
-  document.getElementById('btn-clear-service').style.display = (campusId && hasUnits) ? 'inline-block' : 'none';
+  const units = campusId ? state.units.filter(u => u.campus_id === campusId) : state.units;
 
   if (!units.length) {
-    const hasR = campusId ? getRosterForCampusDay(campusId, state.serviceDay).length > 0 : false;
-    el.innerHTML = `<span style="color:var(--cad-muted); font-size:12px; padding:0 8px;">
-      ${campusId ? (hasR ? 'No units loaded — click <strong style="color:var(--cad-text);">Load Roster</strong> to begin service' : 'No roster template for this campus/day') : 'Select a campus to load units'}
-    </span>`;
+    el.innerHTML = `<span style="color:var(--cad-muted); font-size:12px; padding:0 8px;">No units for this campus</span>`;
     return;
   }
 
-  // Group by type for visual separation
-  const order = { officer: 0, staff: 1, volunteer: 2 };
-  const sorted = [...units].sort((a,b) => (order[a.unit_type]||9) - (order[b.unit_type]||9) || a.unit_label.localeCompare(b.unit_label));
-
-  el.innerHTML = sorted.map(u => `
-    <div class="unit-card status-${u.status}" id="unit-card-${u.id}">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-        <div class="unit-label">${escHtml(u.unit_label)}</div>
-        <button class="unit-remove-btn" onclick="removeUnit(${u.id})" title="Remove unit"><i class="bi bi-x"></i></button>
-      </div>
-      <div class="unit-type">${formatUnitType(u.unit_type)}</div>
+  el.innerHTML = units.map(u => `
+    <div class="unit-card status-${u.status}" id="unit-${u.id}">
+      <div class="unit-label">${escHtml(u.unit_label)}</div>
+      <div class="unit-type">${u.unit_type.toUpperCase()}</div>
       <div>
         <span class="unit-status-dot"></span>
         <span class="unit-status-text">${formatStatus(u.status)}</span>
@@ -1001,124 +1208,36 @@ function renderUnits() {
       </select>
     </div>
   `).join('');
+
+  updateStats();
 }
 
 async function changeUnitStatus(unitId, newStatus) {
   const unit = state.units.find(u => u.id === unitId);
   if (!unit) return;
   unit.status = newStatus;
-  await db.from('units').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', unitId);
-  updateStats();
-  // Re-render just this card's classes without full re-render (avoids dropdown flash)
-  const card = document.getElementById('unit-card-' + unitId);
-  if (card) {
-    card.className = `unit-card status-${newStatus}`;
-    const dot = card.querySelector('.unit-status-text');
-    if (dot) dot.textContent = formatStatus(newStatus);
-  }
-}
 
-async function removeUnit(unitId) {
-  state.units = state.units.filter(u => u.id !== unitId);
-  await db.from('units').delete().eq('id', unitId);
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+    await db.from('units').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', unitId);
+  }
   renderUnits();
-  updateStats();
 }
 
-/* ─── LOAD ROSTER ─── */
-function getRosterForCampusDay(campusId, day) {
-  return state.rosterTemplates.filter(r =>
-    r.campus_id === campusId &&
-    (r.service_day === day || r.service_day === 'both')
-  );
-}
-
-async function loadRoster() {
-  if (!state.selectedCampus) return;
-  const campusId = state.selectedCampus.id;
-  const entries = getRosterForCampusDay(campusId, state.serviceDay);
-
-  if (!entries.length) {
-    showAlert('No roster template found for this campus/day.', 'warning');
-    return;
-  }
-
-  // Check if units already exist
-  const existing = state.units.filter(u => u.campus_id === campusId);
-  if (existing.length > 0) {
-    if (!confirm(`${existing.length} unit(s) already loaded for this campus. Load roster anyway? This will add to existing units.`)) return;
-  }
-
-  const now = new Date().toISOString();
-  const inserts = entries.map(e => ({
-    campus_id: campusId,
-    unit_label: e.unit_label,
-    unit_type: e.unit_type,
-    status: 'available',
-    updated_at: now
-  }));
-
-  const { error } = await db.from('units').insert(inserts);
-  if (error) { showAlert('Error loading roster: ' + error.message, 'danger'); return; }
-
-  await loadUnits(campusId);
-  showAlert(`Roster loaded — ${inserts.length} unit(s) added for ${state.selectedCampus.name}.`, 'success');
-}
-
-/* ─── CLEAR SERVICE ─── */
-function confirmClearService() {
-  if (!state.selectedCampus) return;
-  const campusId = state.selectedCampus.id;
-  const activeInc = state.incidents.filter(i => i.campus_id === campusId && i.status === 'active').length;
-  const unitCount = state.units.filter(u => u.campus_id === campusId).length;
-
-  const msg = `End service for ${state.selectedCampus.name}?\n\n` +
-    `This will:\n• Remove all ${unitCount} unit(s)\n` +
-    (activeInc > 0 ? `• Close ${activeInc} open incident(s)\n` : '') +
-    `\nThis cannot be undone.`;
-
-  if (!confirm(msg)) return;
-  clearService();
-}
-
-async function clearService() {
-  if (!state.selectedCampus) return;
-  const campusId = state.selectedCampus.id;
-  const now = new Date().toISOString();
-
-  // Close open incidents
-  const openIds = state.incidents.filter(i => i.campus_id === campusId && i.status === 'active').map(i => i.id);
-  if (openIds.length) {
-    await db.from('incidents').update({ status: 'closed' }).in('id', openIds);
-    for (const id of openIds) {
-      await db.from('incident_log').insert({ incident_id: id, entry_text: 'Incident closed — service ended.', entered_by: state.operator, entered_at: now });
-    }
-  }
-
-  // Delete all units for this campus
-  await db.from('units').delete().eq('campus_id', campusId);
-
-  state.units = state.units.filter(u => u.campus_id !== campusId);
-  state.incidents = state.incidents.filter(i => i.campus_id !== campusId);
-  state.selectedIncident = null;
-
-  clearDetailPanel();
-  renderQueue();
-  renderUnits();
-  renderPins();
-  updateStats();
-  showAlert(`Service ended for ${state.selectedCampus.name}. Board cleared.`, 'success');
-}
-
-/* ─── INCIDENT QUEUE ─── */
+/* ══════════════════════════════════
+   RENDER INCIDENT QUEUE
+══════════════════════════════════ */
 function renderQueue() {
   const el = document.getElementById('incident-queue');
   const campusId = state.selectedCampus ? state.selectedCampus.id : null;
   const list = campusId ? state.incidents.filter(i => i.campus_id === campusId && i.status === 'active') : [];
 
   const countEl = document.getElementById('queue-count');
-  countEl.textContent = list.length;
-  countEl.style.display = list.length ? 'inline-block' : 'none';
+  if (list.length) {
+    countEl.textContent = list.length;
+    countEl.style.display = 'inline-block';
+  } else {
+    countEl.style.display = 'none';
+  }
 
   if (!list.length) {
     el.innerHTML = `<div class="detail-empty"><i class="bi bi-inbox" style="font-size:32px; color:var(--cad-border); display:block; margin-bottom:8px;"></i><span style="color:var(--cad-muted); font-size:12px;">No active incidents</span></div>`;
@@ -1129,7 +1248,7 @@ function renderQueue() {
     <div class="incident-card p${inc.priority} ${state.selectedIncident && state.selectedIncident.id === inc.id ? 'active' : ''}"
          onclick="selectIncident(${inc.id})">
       <div class="inc-meta">
-        <span class="inc-number">${escHtml(inc.incident_number || 'INC-???')}</span>
+        <span class="inc-number">${inc.incident_number || 'INC-???'}</span>
         <span class="priority-badge">P${inc.priority}</span>
       </div>
       <div class="inc-type">${escHtml(inc.call_type || 'UNKNOWN')}</div>
@@ -1139,14 +1258,20 @@ function renderQueue() {
   `).join('');
 }
 
-/* ─── INCIDENT DETAIL ─── */
+/* ══════════════════════════════════
+   SELECT INCIDENT → DETAIL
+══════════════════════════════════ */
 function selectIncident(id) {
   state.selectedIncident = state.incidents.find(i => i.id === id) || null;
-  // Show/hide map pin hint
-  document.getElementById('map-pin-hint').style.display = state.selectedIncident ? 'inline' : 'none';
   renderQueue();
   renderDetailPanel();
-  if (state.selectedIncident) loadLog(id);
+  if (state.selectedIncident) {
+    if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+      loadLog(id);
+    } else {
+      renderDetailLog();
+    }
+  }
 }
 
 function renderDetailPanel() {
@@ -1155,7 +1280,10 @@ function renderDetailPanel() {
   const logRow = document.getElementById('log-input-row');
   const actionBtns = document.getElementById('detail-action-btns');
 
-  if (!inc) { clearDetailPanel(); return; }
+  if (!inc) {
+    clearDetailPanel();
+    return;
+  }
 
   document.getElementById('detail-inc-number').textContent = inc.incident_number || '';
   actionBtns.style.display = 'flex';
@@ -1163,9 +1291,6 @@ function renderDetailPanel() {
 
   const ct = state.callTypes.find(c => c.code === inc.call_type);
   const ctLabel = ct ? `${ct.code} — ${ct.description}` : inc.call_type;
-
-  // Assigned units
-  const assignedUnits = state.units.filter(u => u.status === 'assigned' || u.status === 'on_scene');
 
   body.innerHTML = `
     <div class="detail-field">
@@ -1187,10 +1312,11 @@ function renderDetailPanel() {
       <div class="detail-value">${new Date(inc.created_at).toLocaleString()}</div>
     </div>
     ${inc.caller_name ? `<div class="detail-field"><div class="detail-label">Caller</div><div class="detail-value">${escHtml(inc.caller_name)}${inc.caller_contact ? ' · ' + escHtml(inc.caller_contact) : ''}</div></div>` : ''}
-    ${inc.pin_x !== null ? `<div class="detail-field"><div class="detail-label">Map Pin</div><div class="detail-value" style="font-size:11px; color:var(--cad-muted);">Placed at ${inc.pin_x}%, ${inc.pin_y}%</div></div>` : `<div style="font-size:11px; color:var(--cad-muted); margin-bottom:10px;"><i class="bi bi-info-circle me-1"></i>Click the map to place an incident pin</div>`}
+
     <div class="divider-label">Narrative Log</div>
     <ul id="log-list"></ul>
   `;
+
   renderDetailLog();
 }
 
@@ -1204,20 +1330,19 @@ function renderDetailLog() {
   }
   el.innerHTML = logs.map(l => `
     <li class="log-entry">
-      <div class="log-time">${new Date(l.entered_at).toLocaleTimeString('en-US', { hour12:false })}</div>
+      <div class="log-time">${new Date(l.entered_at).toLocaleTimeString('en-US', {hour12:false})}</div>
       <div class="log-text">${escHtml(l.entry_text)}</div>
       <div class="log-by">${escHtml(l.entered_by || 'System')}</div>
     </li>
   `).join('');
-  const body = document.getElementById('detail-body');
-  if (body) body.scrollTop = body.scrollHeight;
+  // scroll to bottom
+  el.scrollIntoView && el.parentElement && (el.parentElement.scrollTop = el.parentElement.scrollHeight);
 }
 
 function clearDetailPanel() {
   document.getElementById('detail-inc-number').textContent = '';
   document.getElementById('detail-action-btns').style.display = 'none';
   document.getElementById('log-input-row').style.display = 'none';
-  document.getElementById('map-pin-hint').style.display = 'none';
   document.getElementById('detail-body').innerHTML = `
     <div class="detail-empty">
       <i class="bi bi-arrow-left-circle" style="font-size:32px; color:var(--cad-border); display:block; margin-bottom:8px;"></i>
@@ -1225,27 +1350,41 @@ function clearDetailPanel() {
     </div>`;
 }
 
-/* ─── LOG ENTRY ─── */
+/* ══════════════════════════════════
+   LOG ENTRY SUBMIT
+══════════════════════════════════ */
 async function submitLogEntry() {
   const input = document.getElementById('log-input');
   const text = input.value.trim();
   if (!text || !state.selectedIncident) return;
-  const entry = { incident_id: state.selectedIncident.id, entry_text: text, entered_by: state.operator, entered_at: new Date().toISOString() };
-  const { error } = await db.from('incident_log').insert(entry);
-  if (!error) {
+
+  const entry = {
+    incident_id: state.selectedIncident.id,
+    entry_text: text,
+    entered_by: 'SOC',
+    entered_at: new Date().toISOString()
+  };
+
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+    await db.from('incident_log').insert(entry);
+  } else {
     if (!state.incidentLogs[entry.incident_id]) state.incidentLogs[entry.incident_id] = [];
-    state.incidentLogs[entry.incident_id].push({ ...entry, id: Date.now() });
+    entry.id = Date.now();
+    state.incidentLogs[entry.incident_id].push(entry);
     renderDetailLog();
   }
+
   input.value = '';
 }
 
-/* ─── NEW INCIDENT ─── */
+/* ══════════════════════════════════
+   NEW INCIDENT SUBMIT
+══════════════════════════════════ */
 function openNewIncident() {
   populateCallTypes();
+  // pre-select current campus
   if (state.selectedCampus) document.getElementById('inc-campus').value = state.selectedCampus.id;
   document.getElementById('p3').checked = true;
-  ['inc-location','inc-caller-name','inc-caller-contact','inc-note'].forEach(id => document.getElementById(id).value = '');
   new bootstrap.Modal(document.getElementById('newIncidentModal')).show();
 }
 
@@ -1271,7 +1410,8 @@ function autoSetPriority() {
   const el = document.getElementById('inc-calltype');
   const opt = el.options[el.selectedIndex];
   if (opt && opt.dataset.priority) {
-    const radio = document.getElementById('p' + opt.dataset.priority);
+    const p = opt.dataset.priority;
+    const radio = document.getElementById('p' + p);
     if (radio) radio.checked = true;
   }
 }
@@ -1291,50 +1431,67 @@ async function submitNewIncident() {
   }
 
   const now = new Date().toISOString();
-
-  // Generate incident number: get count for today
-  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
-  const { count } = await db.from('incidents').select('*', { count:'exact', head:true }).gte('created_at', todayStart.toISOString());
-  const incNum = `INC-${new Date().toLocaleDateString('en-US',{month:'2-digit',day:'2-digit'}).replace('/','')}-${String((count||0)+1).padStart(3,'0')}`;
+  const incNum = 'INC-' + String(state.incidents.length + 1).padStart(4, '0');
 
   const newInc = {
-    campus_id: campusId, incident_number: incNum, created_at: now,
-    priority, call_type: callType, location_description: location,
-    caller_name: callerName, caller_contact: callerContact,
-    status: 'active', pin_x: null, pin_y: null, created_by: state.operator
+    campus_id: campusId,
+    incident_number: incNum,
+    created_at: now,
+    priority,
+    call_type: callType,
+    location_description: location,
+    caller_name: callerName,
+    caller_contact: callerContact,
+    status: 'active',
+    pin_x: null,
+    pin_y: null
   };
 
-  const { data, error } = await db.from('incidents').insert(newInc).select().single();
-  if (error) { showAlert('Error: ' + error.message, 'danger'); return; }
-  newInc.id = data.id;
-
-  if (note) {
-    await db.from('incident_log').insert({ incident_id: data.id, entry_text: note, entered_by: state.operator, entered_at: now });
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+    const { data, error } = await db.from('incidents').insert(newInc).select().single();
+    if (error) { showAlert('Error creating incident: ' + error.message, 'danger'); return; }
+    newInc.id = data.id;
+    if (note) {
+      await db.from('incident_log').insert({ incident_id: data.id, entry_text: note, entered_by: 'SOC', entered_at: now });
+    }
+  } else {
+    newInc.id = Date.now();
+    state.incidents.push(newInc);
+    if (note) {
+      state.incidentLogs[newInc.id] = [{ id: Date.now(), incident_id: newInc.id, entry_text: note, entered_by: 'SOC', entered_at: now }];
+    }
+    renderQueue();
+    renderPins();
+    updateStats();
   }
 
-  state.incidents.push(newInc);
   bootstrap.Modal.getInstance(document.getElementById('newIncidentModal')).hide();
-  showAlert(`${incNum} opened — P${priority} ${callType}`, 'success');
-  renderQueue();
-  updateStats();
+  showAlert(`Incident ${incNum} opened.`, 'success');
+
+  // select new incident
   state.selectedIncident = newInc;
-  document.getElementById('map-pin-hint').style.display = 'inline';
   renderDetailPanel();
+  renderDetailLog();
 }
 
-/* ─── CLOSE INCIDENT ─── */
+/* ══════════════════════════════════
+   CLOSE INCIDENT
+══════════════════════════════════ */
 async function closeSelectedIncident() {
   if (!state.selectedIncident) return;
-  const inc = state.selectedIncident;
-  if (!confirm(`Close ${inc.incident_number}?`)) return;
+  if (!confirm(`Close incident ${state.selectedIncident.incident_number}?`)) return;
 
-  await db.from('incidents').update({ status: 'closed' }).eq('id', inc.id);
-  await db.from('incident_log').insert({ incident_id: inc.id, entry_text: 'Incident closed.', entered_by: state.operator, entered_at: new Date().toISOString() });
+  state.selectedIncident.status = 'closed';
 
-  const idx = state.incidents.findIndex(i => i.id === inc.id);
-  if (idx > -1) state.incidents.splice(idx, 1);
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+    await db.from('incidents').update({ status: 'closed' }).eq('id', state.selectedIncident.id);
+    await db.from('incident_log').insert({ incident_id: state.selectedIncident.id, entry_text: 'Incident closed.', entered_by: 'SOC', entered_at: new Date().toISOString() });
+  } else {
+    const inc = state.incidents.find(i => i.id === state.selectedIncident.id);
+    if (inc) inc.status = 'closed';
+  }
 
-  showAlert(`${inc.incident_number} closed.`, 'success');
+  showAlert(`${state.selectedIncident.incident_number} closed.`, 'success');
   state.selectedIncident = null;
   clearDetailPanel();
   renderQueue();
@@ -1342,7 +1499,9 @@ async function closeSelectedIncident() {
   updateStats();
 }
 
-/* ─── ADD UNIT ─── */
+/* ══════════════════════════════════
+   ADD UNIT
+══════════════════════════════════ */
 function openAddUnit() {
   document.getElementById('unit-label').value = '';
   if (state.selectedCampus) document.getElementById('unit-campus-select').value = state.selectedCampus.id;
@@ -1353,115 +1512,65 @@ async function submitAddUnit() {
   const campusId = parseInt(document.getElementById('unit-campus-select').value);
   const label = document.getElementById('unit-label').value.trim();
   const type = document.getElementById('unit-type').value;
-  if (!campusId || !label) { showAlert('Campus and Last Name are required.', 'danger'); return; }
 
-  const { data, error } = await db.from('units').insert({
-    campus_id: campusId, unit_label: label, unit_type: type,
-    status: 'available', updated_at: new Date().toISOString()
-  }).select().single();
+  if (!campusId || !label) { showAlert('Campus and Unit Label are required.', 'danger'); return; }
 
-  if (error) { showAlert('Error: ' + error.message, 'danger'); return; }
-  state.units.push(data);
+  const newUnit = { campus_id: campusId, unit_label: label, unit_type: type, status: 'available', updated_at: new Date().toISOString() };
+
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+    const { data, error } = await db.from('units').insert(newUnit).select().single();
+    if (error) { showAlert('Error adding unit: ' + error.message, 'danger'); return; }
+    newUnit.id = data.id;
+  } else {
+    newUnit.id = Date.now();
+    state.units.push(newUnit);
+    renderUnits();
+  }
+
   bootstrap.Modal.getInstance(document.getElementById('addUnitModal')).hide();
-  showAlert(`${label} added.`, 'success');
-  renderUnits();
-  updateStats();
+  showAlert(`Unit ${label} added.`, 'success');
 }
 
-/* ─── ROSTER MANAGER ─── */
-function openRosterManager() {
-  renderCampusDropdowns();
-  if (state.selectedCampus) document.getElementById('rm-campus').value = state.selectedCampus.id;
-  document.getElementById('rm-day').value = state.serviceDay;
-  document.getElementById('rm-name').value = '';
-  renderRosterList();
-  new bootstrap.Modal(document.getElementById('rosterModal')).show();
-}
-
-function renderRosterList() {
-  const campusId = parseInt(document.getElementById('rm-campus').value);
-  const day = document.getElementById('rm-day').value;
-  const el = document.getElementById('rm-list');
-
-  if (!campusId) {
-    el.innerHTML = `<span style="color:var(--cad-muted); font-size:12px;">Select a campus</span>`;
-    return;
-  }
-
-  const entries = state.rosterTemplates.filter(r =>
-    r.campus_id === campusId &&
-    (day === 'both' ? true : (r.service_day === day || r.service_day === 'both'))
-  );
-
-  if (!entries.length) {
-    el.innerHTML = `<span style="color:var(--cad-muted); font-size:12px;">No entries yet for this campus/day combination.</span>`;
-    return;
-  }
-
-  const order = { officer: 0, staff: 1, volunteer: 2 };
-  const sorted = [...entries].sort((a,b) => (order[a.unit_type]||9) - (order[b.unit_type]||9) || a.unit_label.localeCompare(b.unit_label));
-
-  el.innerHTML = sorted.map(r => `
-    <div class="roster-row">
-      <span class="rr-label">${escHtml(r.unit_label)}</span>
-      <span class="roster-type-badge type-${r.unit_type}">${formatUnitType(r.unit_type)}</span>
-      <span class="svc-day-tag ${r.service_day==='sunday'?'tag-sun':r.service_day==='wednesday'?'tag-wed':'tag-both'}" style="font-size:9px; padding:1px 5px;">
-        ${r.service_day === 'both' ? 'SUN+WED' : r.service_day.toUpperCase().slice(0,3)}
-      </span>
-      <button class="cad-btn-danger" style="padding:1px 8px; font-size:10px;" onclick="deleteRosterEntry(${r.id})">
-        <i class="bi bi-trash"></i>
-      </button>
-    </div>
-  `).join('');
-}
-
-async function addRosterEntry() {
-  const campusId = parseInt(document.getElementById('rm-campus').value);
-  const name = document.getElementById('rm-name').value.trim();
-  const type = document.getElementById('rm-type').value;
-  const day = document.getElementById('rm-day').value;
-
-  if (!campusId || !name) { showAlert('Campus and name are required.', 'danger'); return; }
-
-  const { data, error } = await db.from('roster_template_units').insert({
-    campus_id: campusId, unit_label: name, unit_type: type, service_day: day
-  }).select().single();
-
-  if (error) { showAlert('Error: ' + error.message, 'danger'); return; }
-  state.rosterTemplates.push(data);
-  document.getElementById('rm-name').value = '';
-  renderRosterList();
-  showAlert(`${name} added to roster.`, 'success');
-}
-
-async function deleteRosterEntry(id) {
-  if (!confirm('Remove this entry from the template?')) return;
-  await db.from('roster_template_units').delete().eq('id', id);
-  state.rosterTemplates = state.rosterTemplates.filter(r => r.id !== id);
-  renderRosterList();
-}
-
-/* ─── MAP ─── */
+/* ══════════════════════════════════
+   MAP
+══════════════════════════════════ */
 function showMap(url) {
   const img = document.getElementById('map-img');
+  const ph = document.getElementById('map-placeholder');
   img.src = url;
   img.style.display = 'block';
-  document.getElementById('map-placeholder').style.display = 'none';
+  ph.style.display = 'none';
   renderPins();
 }
+
 function hideMap() {
-  document.getElementById('map-img').style.display = 'none';
-  document.getElementById('map-placeholder').style.display = 'block';
+  const img = document.getElementById('map-img');
+  const ph = document.getElementById('map-placeholder');
+  img.style.display = 'none';
+  ph.style.display = 'block';
   document.getElementById('map-overlay').innerHTML = '';
 }
+
 function handleMapUpload(event) {
   const file = event.target.files[0];
-  if (!file || !state.selectedCampus) return;
-  uploadMapToSupabase(file);
+  if (!file) return;
+
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE' && state.selectedCampus) {
+    uploadMapToSupabase(file);
+  } else {
+    // Demo: use local object URL
+    const url = URL.createObjectURL(file);
+    state.mapImageUrl = url;
+    if (state.selectedCampus) state.selectedCampus.map_image_url = url;
+    showMap(url);
+    showAlert('Map loaded (local preview — not saved to database in demo mode).', 'info');
+  }
 }
+
 async function uploadMapToSupabase(file) {
+  if (!state.selectedCampus) return;
   const path = `maps/campus-${state.selectedCampus.id}-${Date.now()}.${file.name.split('.').pop()}`;
-  const { error } = await db.storage.from('campus-maps').upload(path, file, { upsert: true });
+  const { data, error } = await db.storage.from('campus-maps').upload(path, file, { upsert: true });
   if (error) { showAlert('Map upload failed: ' + error.message, 'danger'); return; }
   const { data: urlData } = db.storage.from('campus-maps').getPublicUrl(path);
   const publicUrl = urlData.publicUrl;
@@ -1470,23 +1579,31 @@ async function uploadMapToSupabase(file) {
   showMap(publicUrl);
   showAlert('Map uploaded and saved.', 'success');
 }
+
 async function onMapClick(event) {
   if (!state.selectedIncident) return;
   const img = document.getElementById('map-img');
   const rect = img.getBoundingClientRect();
-  const x = parseFloat(((event.clientX - rect.left) / rect.width * 100).toFixed(1));
-  const y = parseFloat(((event.clientY - rect.top) / rect.height * 100).toFixed(1));
-  state.selectedIncident.pin_x = x;
-  state.selectedIncident.pin_y = y;
-  await db.from('incidents').update({ pin_x: x, pin_y: y }).eq('id', state.selectedIncident.id);
+  const x = ((event.clientX - rect.left) / rect.width * 100).toFixed(1);
+  const y = ((event.clientY - rect.top) / rect.height * 100).toFixed(1);
+
+  state.selectedIncident.pin_x = parseFloat(x);
+  state.selectedIncident.pin_y = parseFloat(y);
+
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+    await db.from('incidents').update({ pin_x: x, pin_y: y }).eq('id', state.selectedIncident.id);
+  }
+
   renderPins();
-  renderDetailPanel();
+  showAlert(`Pin placed at ${x}%, ${y}%`, 'info');
 }
+
 function renderPins() {
   const overlay = document.getElementById('map-overlay');
   overlay.innerHTML = '';
   const campusId = state.selectedCampus ? state.selectedCampus.id : null;
   if (!campusId) return;
+
   state.incidents.filter(i => i.campus_id === campusId && i.status === 'active' && i.pin_x !== null).forEach(inc => {
     const pin = document.createElement('div');
     pin.className = `map-pin p${inc.priority}`;
@@ -1498,53 +1615,57 @@ function renderPins() {
   });
 }
 
-/* ─── STATS ─── */
+/* ══════════════════════════════════
+   STATS BAR
+══════════════════════════════════ */
 function updateStats() {
   const campusId = state.selectedCampus ? state.selectedCampus.id : null;
-  const active  = campusId ? state.incidents.filter(i => i.campus_id === campusId && i.status === 'active').length : 0;
-  const avail   = campusId ? state.units.filter(u => u.campus_id === campusId && u.status === 'available').length : 0;
-  const onScene = campusId ? state.units.filter(u => u.campus_id === campusId && u.status === 'on_scene').length : 0;
+  const active = campusId ? state.incidents.filter(i => i.campus_id === campusId && i.status === 'active').length : 0;
+  const avail  = campusId ? state.units.filter(u => u.campus_id === campusId && u.status === 'available').length : 0;
   document.getElementById('stat-active').textContent = active;
   document.getElementById('stat-avail').textContent = avail;
-  document.getElementById('stat-scene').textContent = onScene;
-  if (active > 0) document.getElementById('stat-active').style.color = 'var(--cad-p1)';
-  else document.getElementById('stat-active').style.color = 'var(--cad-text)';
 }
 
-/* ─── UTILS ─── */
+/* ══════════════════════════════════
+   UTILITIES
+══════════════════════════════════ */
 function formatStatus(s) {
   return { available:'AVAILABLE', assigned:'ASSIGNED', on_scene:'ON SCENE', unavailable:'UNAVAILABLE' }[s] || s.toUpperCase();
 }
-function formatUnitType(t) {
-  return { officer:'OFFICER', volunteer:'VOLUNTEER', staff:'STAFF' }[t] || t.toUpperCase();
-}
+
 function timeAgo(iso) {
   const diff = Math.floor((Date.now() - new Date(iso)) / 60000);
   if (diff < 1) return 'Just now';
-  if (diff < 60) return diff + 'm ago';
-  return Math.floor(diff/60) + 'h ' + (diff%60) + 'm ago';
+  if (diff < 60) return diff + ' min ago';
+  return Math.floor(diff / 60) + 'h ' + (diff % 60) + 'm ago';
 }
+
 function escHtml(str) {
   if (!str) return '';
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
 function showAlert(msg, type) {
   const el = document.createElement('div');
   el.className = `alert-flash alert alert-${type}`;
   el.textContent = msg;
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 3800);
+  setTimeout(() => el.remove(), 3500);
 }
 
-/* ─── KEYBOARD SHORTCUTS ─── */
+/* ══════════════════════════════════
+   KEYBOARD SHORTCUTS
+══════════════════════════════════ */
 document.addEventListener('keydown', e => {
-  if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+  if (!state.session) return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
   if (e.key === 'n' || e.key === 'N') openNewIncident();
   if (e.key === 'Escape') { state.selectedIncident = null; clearDetailPanel(); renderQueue(); }
-  if (e.key === 'r' || e.key === 'R') openRosterManager();
 });
 
-/* ─── BOOT ─── */
+/* ══════════════════════════════════
+   BOOT
+══════════════════════════════════ */
 boot();
 </script>
 </body>
