@@ -763,7 +763,32 @@
     }
 
     /* roster rows */
-    .roster-row { background: #1a2030; }
+    .roster-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #1a2030;
+      border: 1px solid var(--cad-border);
+      border-radius: 3px;
+      padding: 5px 10px;
+      margin-bottom: 4px;
+    }
+    .rr-label {
+      flex: 1;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--cad-text);
+    }
+    .roster-type-badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 2px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .type-officer  { background: #1a3a5c; color: #7ab8e8; }
+    .type-volunteer{ background: #1a3a1a; color: #7ae87a; }
+    .type-staff    { background: #3a2a1a; color: #e8b87a; }
 
     /* divider */
     .divider-label {
@@ -965,10 +990,6 @@
   <select class="campus-select" id="campus-select" onchange="onCampusChange()">
     <option value="">— Select Campus —</option>
   </select>
-    <div class="svc-toggle">
-      <button id="btn-sun" class="active" onclick="setServiceDay('sunday')">SUN</button>
-      <button id="btn-wed" onclick="setServiceDay('wednesday')">WED</button>
-    </div>
 
   <div class="stat-pill">Active Incidents: <span id="stat-active">0</span></div>
   <div class="stat-pill">Units Available: <span id="stat-avail">0</span></div>
@@ -1089,7 +1110,6 @@
   <div class="bar-header">
     <i class="bi bi-people-fill"></i> Unit Status Board
     <span id="unit-campus-label" style="color:#fff; font-weight:400; font-size:11px;"></span>
-    <span id="svc-day-tag" class="svc-day-tag tag-sun ms-1">SUNDAY</span>
     <button id="btn-load-roster" class="cad-btn-primary ms-2" style="padding:2px 10px; font-size:10px; display:none;" onclick="loadRoster()"><i class="bi bi-people-fill me-1"></i>Load Roster</button>
     <button id="btn-clear-service" class="cad-btn-warn ms-1" style="padding:2px 10px; font-size:10px; display:none;" onclick="confirmClearService()"><i class="bi bi-stop-circle me-1"></i>Clear Service</button>
     <button class="cad-btn-secondary ms-auto" style="padding:2px 8px; font-size:10px;" onclick="openAddUnit()">
@@ -1182,7 +1202,6 @@ let state = {
   rosterTemplates:  [],
   selectedCampus:   null,
   selectedIncident: null,
-  serviceDay:       'sunday',
   mapImageUrl:      null,
   session:          null
 };
@@ -1652,7 +1671,7 @@ function renderUnits() {
   const el = document.getElementById('units-scroll');
   const campusId = state.selectedCampus ? state.selectedCampus.id : null;
   const units = campusId ? state.units.filter(u => u.campus_id === campusId) : state.units;
-  const hasRoster = campusId ? getRosterForCampusDay(campusId, state.serviceDay).length > 0 : false;
+  const hasRoster = campusId ? getRosterForCampusDay(campusId).length > 0 : false;
 
   document.getElementById('btn-load-roster').style.display  = (campusId && hasRoster && !units.length) ? 'inline-block' : 'none';
   document.getElementById('btn-clear-service').style.display = (campusId && units.length) ? 'inline-block' : 'none';
@@ -2225,17 +2244,14 @@ function toggleHistoryRow(id) {
    ROSTER
 ════════════════════════════════════════════════ */
 
-function getRosterForCampusDay(campusId, day) {
-  return state.rosterTemplates.filter(r =>
-    r.campus_id === campusId &&
-    (r.service_day === day || r.service_day === 'both')
-  );
+function getRosterForCampusDay(campusId) {
+  return state.rosterTemplates.filter(r => r.campus_id === campusId);
 }
 
 async function loadRoster() {
   if (!state.selectedCampus) return;
   const campusId = state.selectedCampus.id;
-  const entries = getRosterForCampusDay(campusId, state.serviceDay);
+  const entries = getRosterForCampusDay(campusId);
 
   if (!entries.length) {
     showAlert('No roster template found for this campus/day.', 'warning');
@@ -2267,7 +2283,6 @@ async function loadRoster() {
 function openRosterManager() {
   renderCampusDropdowns();
   if (state.selectedCampus) document.getElementById('rm-campus').value = state.selectedCampus.id;
-  document.getElementById('rm-day').value = state.serviceDay;
   document.getElementById('rm-name').value = '';
   renderRosterList();
   bootstrap.Modal.getOrCreateInstance(document.getElementById('rosterModal')).show();
@@ -2275,7 +2290,6 @@ function openRosterManager() {
 
 function renderRosterList() {
   const campusId = parseInt(document.getElementById('rm-campus').value);
-  const day = document.getElementById('rm-day').value;
   const el = document.getElementById('rm-list');
 
   if (!campusId) {
@@ -2283,13 +2297,10 @@ function renderRosterList() {
     return;
   }
 
-  const entries = state.rosterTemplates.filter(r =>
-    r.campus_id === campusId &&
-    (day === 'both' ? true : (r.service_day === day || r.service_day === 'both'))
-  );
+  const entries = getRosterForCampusDay(campusId);
 
   if (!entries.length) {
-    el.innerHTML = `<span style="color:var(--cad-muted); font-size:12px;">No entries yet for this campus/day combination.</span>`;
+    el.innerHTML = `<span style="color:var(--cad-muted); font-size:12px;">No entries yet for this campus.</span>`;
     return;
   }
 
@@ -2300,9 +2311,6 @@ function renderRosterList() {
     <div class="roster-row">
       <span class="rr-label">${escHtml(r.unit_label)}</span>
       <span class="roster-type-badge type-${r.unit_type}">${formatUnitType(r.unit_type)}</span>
-      <span class="svc-day-tag ${r.service_day==='sunday'?'tag-sun':r.service_day==='wednesday'?'tag-wed':'tag-both'}" style="font-size:9px; padding:1px 5px;">
-        ${r.service_day === 'both' ? 'SUN+WED' : r.service_day.toUpperCase().slice(0,3)}
-      </span>
       <button class="cad-btn-danger" style="padding:1px 8px; font-size:10px;" onclick="deleteRosterEntry(${r.id})">
         <i class="bi bi-trash"></i>
       </button>
@@ -2314,12 +2322,11 @@ async function addRosterEntry() {
   const campusId = parseInt(document.getElementById('rm-campus').value);
   const name = document.getElementById('rm-name').value.trim();
   const type = document.getElementById('rm-type').value;
-  const day = document.getElementById('rm-day').value;
 
   if (!campusId || !name) { showAlert('Campus and name are required.', 'danger'); return; }
 
   const { data, error } = await db.from('roster_template_units').insert({
-    campus_id: campusId, unit_label: name, unit_type: type, service_day: day
+    campus_id: campusId, unit_label: name, unit_type: type, service_day: 'both'
   }).select().single();
 
   if (error) { showAlert('Error: ' + error.message, 'danger'); return; }
@@ -2334,15 +2341,6 @@ async function deleteRosterEntry(id) {
   await db.from('roster_template_units').delete().eq('id', id);
   state.rosterTemplates = state.rosterTemplates.filter(r => r.id !== id);
   renderRosterList();
-}
-
-function setServiceDay(day) {
-  state.serviceDay = day;
-  document.getElementById('btn-sun').classList.toggle('active', day === 'sunday');
-  document.getElementById('btn-wed').classList.toggle('active', day === 'wednesday');
-  const tag = document.getElementById('svc-day-tag');
-  tag.textContent = day === 'sunday' ? 'SUNDAY' : 'WEDNESDAY';
-  tag.className = 'svc-day-tag ms-1 ' + (day === 'sunday' ? 'tag-sun' : 'tag-wed');
 }
 
 async function confirmClearService() {
@@ -2665,20 +2663,10 @@ boot();
         <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body" style="padding:14px;">
-        <!-- Campus + Day filters -->
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
-          <div>
-            <label class="cad-label">Campus</label>
-            <select class="cad-input" id="rm-campus" onchange="renderRosterList()" style="margin-bottom:0;"></select>
-          </div>
-          <div>
-            <label class="cad-label">Service Day</label>
-            <select class="cad-input" id="rm-day" onchange="renderRosterList()" style="margin-bottom:0;">
-              <option value="sunday">Sunday</option>
-              <option value="wednesday">Wednesday</option>
-              <option value="both">Both Days</option>
-            </select>
-          </div>
+        <!-- Campus filter -->
+        <div style="margin-bottom:12px;">
+          <label class="cad-label">Campus</label>
+          <select class="cad-input" id="rm-campus" onchange="renderRosterList()" style="margin-bottom:0;"></select>
         </div>
 
         <!-- Current roster list -->
