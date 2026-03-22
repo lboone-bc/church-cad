@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Church Security CAD</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+
+  <style>
+    :root {
+      --cad-bg:        #0d0f12;
+      --cad-panel:     #13161c;
+      --cad-border:    #252830;
+      --cad-header:    #1a1d24;
+      --cad-p1:        #dc2626; /* Priority 1 - red   */
+      --cad-p2:        #d97706; /* Priority 2 - orange */
+      --cad-p3:        #2563eb; /* Priority 3 - blue   */
+      --cad-p4:        #4b5563; /* Priority 4 - gray   */
+      --cad-text:      #e2e8f0;
+      --cad-muted:     #64748b;
+      --cad-accent:    #38bdf8;
+      --unit-avail:    #16a34a;
+      --unit-assigned: #d97706;
+      --unit-scene:    #dc2626;
+      --unit-unavail:  #374151;
+      --topbar-h:      48px;
+      --bottom-h:      140px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--cad-bg);
+      color: var(--cad-text);
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 13px;
+      overflow: hidden;
+    }
+
+    /* ── TOP BAR ── */
+    #topbar {
+      height: var(--topbar-h);
+      background: var(--cad-header);
+      border-bottom: 1px solid var(--cad-border);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 12px;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+    }
+    #topbar .brand {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--cad-accent);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    #topbar .campus-select {
+      background: var(--cad-panel);
+      border: 1px solid var(--cad-border);
+      color: var(--cad-text);
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-family: inherit;
+      font-size: 12px;
+    }
+    #topbar .stat-pill {
+      background: var(--cad-panel);
+      border: 1px solid var(--cad-border);
+      border-radius: 3px;
+      padding: 3px 10px;
+      font-size: 12px;
+      color: var(--cad-muted);
+      white-space: nowrap;
+    }
+    #topbar .stat-pill span {
+      color: var(--cad-text);
+      font-weight: 700;
+    }
+    #clock {
+      margin-left: auto;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--cad-accent);
+      letter-spacing: 2px;
+      white-space: nowrap;
+    }
+    #conn-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      white-space: nowrap;
+    }
+
+    /* ── MAIN BODY ── */
+    #main-body {
+      position: fixed;
+      top: var(--topbar-h);
+      left: 0;
+      right: 0;
+      bottom: var(--bottom-h);
+      display: grid;
+      grid-template-columns: 300px 1fr 340px;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    /* ── PANELS ── */
+    .cad-panel {
+      background: var(--cad-panel);
+      border-right: 1px solid var(--cad-border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .cad-panel:last-child { border-right: none; }
+
+    .panel-header {
+      background: var(--cad-header);
+      border-bottom: 1px solid var(--cad-border);
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--cad-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 8px;
+    }
+    .panel-body::-webkit-scrollbar { width: 4px; }
+    .panel-body::-webkit-scrollbar-track { background: var(--cad-panel); }
+    .panel-body::-webkit-scrollbar-thumb { background: var(--cad-border); border-radius: 2px; }
+
+    /* ── INCIDENT QUEUE (LEFT) ── */
+    .incident-card {
+      border: 1px solid var(--cad-border);
+      border-left: 4px solid var(--cad-p3);
+      border-radius: 3px;
+      padding: 7px 9px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: background 0.12s;
+      background: var(--cad-bg);
+    }
+    .incident-card:hover { background: #1a1d24; }
+    .incident-card.active { background: #1a2433; border-left-color: var(--cad-accent); }
+    .incident-card.p1 { border-left-color: var(--cad-p1); }
+    .incident-card.p2 { border-left-color: var(--cad-p2); }
+    .incident-card.p3 { border-left-color: var(--cad-p3); }
+    .incident-card.p4 { border-left-color: var(--cad-p4); }
+
+    .inc-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3px;
+    }
+    .inc-number { font-size: 10px; color: var(--cad-muted); }
+    .priority-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 2px;
+    }
+    .p1 .priority-badge { background: var(--cad-p1); color: #fff; }
+    .p2 .priority-badge { background: var(--cad-p2); color: #fff; }
+    .p3 .priority-badge { background: var(--cad-p3); color: #fff; }
+    .p4 .priority-badge { background: var(--cad-p4); color: #9ca3af; }
+
+    .inc-type { font-size: 13px; font-weight: 700; color: var(--cad-text); }
+    .inc-location { font-size: 11px; color: var(--cad-muted); margin-top: 2px; }
+    .inc-time { font-size: 10px; color: var(--cad-muted); }
+
+    /* ── MAP PANEL (CENTER) ── */
+    #map-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #0a0c10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    #map-img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: none;
+    }
+    #map-placeholder {
+      text-align: center;
+      color: var(--cad-muted);
+    }
+    #map-placeholder .bi { font-size: 48px; display: block; margin-bottom: 12px; color: var(--cad-border); }
+    #map-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+    }
+    .map-pin {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      pointer-events: all;
+    }
+    .map-pin.p1 { background: var(--cad-p1); }
+    .map-pin.p2 { background: var(--cad-p2); }
+    .map-pin.p3 { background: var(--cad-p3); }
+
+    #map-upload-btn {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: var(--cad-header);
+      border: 1px solid var(--cad-border);
+      color: var(--cad-muted);
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    #map-upload-btn:hover { color: var(--cad-text); border-color: var(--cad-accent); }
+    #map-file-input { display: none; }
+
+    /* ── INCIDENT DETAIL (RIGHT) ── */
+    .detail-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--cad-muted);
+      text-align: center;
+    }
+    .detail-empty .bi { font-size: 36px; display: block; margin-bottom: 10px; color: var(--cad-border); }
+
+    .detail-field { margin-bottom: 12px; }
+    .detail-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--cad-muted);
+      margin-bottom: 3px;
+    }
+    .detail-value {
+      font-size: 13px;
+      color: var(--cad-text);
+      background: var(--cad-bg);
+      border: 1px solid var(--cad-border);
+      border-radius: 3px;
+      padding: 5px 8px;
+      min-height: 28px;
+    }
+
+    /* Narrative log */
+    #log-list { list-style: none; padding: 0; margin: 0; }
+    .log-entry {
+      border-left: 2px solid var(--cad-border);
+      padding: 4px 8px;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+    .log-entry .log-time { font-size: 10px; color: var(--cad-accent); font-weight: 700; }
+    .log-entry .log-text { color: var(--cad-text); }
+    .log-entry .log-by { font-size: 10px; color: var(--cad-muted); }
+
+    #log-input-row {
+      display: flex;
+      gap: 6px;
+      padding: 8px;
+      border-top: 1px solid var(--cad-border);
+      flex-shrink: 0;
+      background: var(--cad-header);
+    }
+    #log-input {
+      flex: 1;
+      background: var(--cad-bg);
+      border: 1px solid var(--cad-border);
+      color: var(--cad-text);
+      font-family: inherit;
+      font-size: 12px;
+      padding: 5px 8px;
+      border-radius: 3px;
+    }
+    #log-input:focus { outline: none; border-color: var(--cad-accent); }
+    #log-submit {
+      background: var(--cad-accent);
+      border: none;
+      color: #000;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    #log-submit:disabled { background: var(--cad-border); color: var(--cad-muted); cursor: default; }
+
+    /* ── BOTTOM UNIT BAR ── */
+    #bottom-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: var(--bottom-h);
+      background: var(--cad-header);
+      border-top: 1px solid var(--cad-border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #bottom-bar .bar-header {
+      padding: 5px 12px 3px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--cad-muted);
+      border-bottom: 1px solid var(--cad-border);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #units-scroll {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    #units-scroll::-webkit-scrollbar { height: 3px; }
+    #units-scroll::-webkit-scrollbar-track { background: var(--cad-header); }
+    #units-scroll::-webkit-scrollbar-thumb { background: var(--cad-border); }
+
+    .unit-card {
+      flex-shrink: 0;
+      width: 130px;
+      background: var(--cad-panel);
+      border: 1px solid var(--cad-border);
+      border-radius: 3px;
+      padding: 6px 8px;
+      cursor: pointer;
+      transition: border-color 0.12s;
+    }
+    .unit-card:hover { border-color: var(--cad-muted); }
+    .unit-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--cad-text);
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .unit-type { font-size: 10px; color: var(--cad-muted); margin-bottom: 4px; }
+    .unit-status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 4px;
+    }
+    .status-available   .unit-status-dot { background: var(--unit-avail); }
+    .status-assigned    .unit-status-dot { background: var(--unit-assigned); }
+    .status-on_scene    .unit-status-dot { background: var(--unit-scene); }
+    .status-unavailable .unit-status-dot { background: var(--unit-unavail); border: 1px solid #6b7280; }
+
+    .unit-status-text {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .status-available   .unit-status-text { color: var(--unit-avail); }
+    .status-assigned    .unit-status-text { color: var(--unit-assigned); }
+    .status-on_scene    .unit-status-text { color: var(--unit-scene); }
+    .status-unavailable .unit-status-text { color: var(--cad-muted); }
+
+    /* ── MODALS ── */
+    .cad-modal-content {
+      background: var(--cad-panel);
+      border: 1px solid var(--cad-border);
+      border-radius: 4px;
+      color: var(--cad-text);
+      font-family: 'Courier New', Courier, monospace;
+    }
+    .cad-modal-header {
+      background: var(--cad-header);
+      border-bottom: 1px solid var(--cad-border);
+      padding: 10px 14px;
+    }
+    .cad-modal-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--cad-accent);
+    }
+    .cad-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--cad-muted);
+      margin-bottom: 3px;
+      display: block;
+    }
+    .cad-input {
+      background: var(--cad-bg);
+      border: 1px solid var(--cad-border);
+      color: var(--cad-text);
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 13px;
+      width: 100%;
+      padding: 6px 9px;
+      border-radius: 3px;
+      margin-bottom: 10px;
+    }
+    .cad-input:focus { outline: none; border-color: var(--cad-accent); }
+    .cad-btn-primary {
+      background: var(--cad-accent);
+      color: #000;
+      border: none;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 7px 16px;
+      border-radius: 3px;
+      cursor: pointer;
+      letter-spacing: 1px;
+    }
+    .cad-btn-secondary {
+      background: transparent;
+      color: var(--cad-muted);
+      border: 1px solid var(--cad-border);
+      font-family: inherit;
+      font-size: 12px;
+      padding: 7px 14px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .cad-btn-danger {
+      background: transparent;
+      color: var(--cad-p1);
+      border: 1px solid var(--cad-p1);
+      font-family: inherit;
+      font-size: 12px;
+      padding: 7px 14px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    /* priority radio pills */
+    .priority-pills { display: flex; gap: 6px; margin-bottom: 10px; }
+    .priority-pill input[type=radio] { display: none; }
+    .priority-pill label {
+      padding: 4px 12px;
+      border-radius: 2px;
+      border: 1px solid var(--cad-border);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--cad-muted);
+    }
+    .priority-pill input[value="1"]:checked + label { background: var(--cad-p1); border-color: var(--cad-p1); color: #fff; }
+    .priority-pill input[value="2"]:checked + label { background: var(--cad-p2); border-color: var(--cad-p2); color: #fff; }
+    .priority-pill input[value="3"]:checked + label { background: var(--cad-p3); border-color: var(--cad-p3); color: #fff; }
+    .priority-pill input[value="4"]:checked + label { background: var(--cad-p4); border-color: var(--cad-p4); color: #9ca3af; }
+
+    /* status change select */
+    .unit-status-select {
+      width: 100%;
+      background: var(--cad-bg);
+      border: 1px solid var(--cad-border);
+      color: var(--cad-text);
+      font-family: inherit;
+      font-size: 11px;
+      padding: 3px 5px;
+      border-radius: 2px;
+      margin-top: 4px;
+    }
+
+    /* ── MISC ── */
+    .alert-flash {
+      position: fixed;
+      top: 56px;
+      right: 14px;
+      z-index: 999;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      padding: 8px 14px;
+      border-radius: 3px;
+      animation: fadeout 3s forwards;
+    }
+    @keyframes fadeout {
+      0%   { opacity: 1; }
+      70%  { opacity: 1; }
+      100% { opacity: 0; pointer-events: none; }
+    }
+    .divider-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--cad-muted);
+      border-bottom: 1px solid var(--cad-border);
+      padding-bottom: 4px;
+      margin: 10px 0 8px;
+    }
+    .badge-count {
+      background: var(--cad-p1);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     TOP BAR
+══════════════════════════════════════ -->
+<div id="topbar">
+  <div class="brand"><i class="bi bi-shield-fill me-1"></i> SecureCAD</div>
+
+  <select class="campus-select" id="campus-select" onchange="onCampusChange()">
+    <option value="">— Select Campus —</option>
+  </select>
+
+  <div class="stat-pill">Active Incidents: <span id="stat-active">0</span></div>
+  <div class="stat-pill">Units Available: <span id="stat-avail">0</span></div>
+
+  <button class="cad-btn-primary" style="font-size:11px; padding:4px 12px;" onclick="openNewIncident()">
+    <i class="bi bi-plus-lg me-1"></i> New Incident
+  </button>
+
+  <span id="conn-badge" class="badge bg-secondary">Connecting...</span>
+  <div id="clock">--:--:--</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MAIN BODY (3 panels)
+══════════════════════════════════════ -->
+<div id="main-body">
+
+  <!-- LEFT: Incident Queue -->
+  <div class="cad-panel">
+    <div class="panel-header">
+      <i class="bi bi-list-ul"></i> Incident Queue
+      <span id="queue-count" class="badge-count ms-auto" style="display:none;"></span>
+    </div>
+    <div class="panel-body" id="incident-queue">
+      <div class="detail-empty">
+        <i class="bi bi-inbox" style="font-size:32px; color:var(--cad-border); display:block; margin-bottom:8px;"></i>
+        <span style="color:var(--cad-muted); font-size:12px;">No active incidents</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER: Map -->
+  <div class="cad-panel" style="border-right:1px solid var(--cad-border);">
+    <div class="panel-header">
+      <i class="bi bi-map"></i> Campus Map
+      <span id="map-campus-label" style="color:var(--cad-text); margin-left:6px; font-weight:400; font-size:12px;"></span>
+    </div>
+    <div class="panel-body" style="padding:0; position:relative;">
+      <div id="map-container">
+        <div id="map-placeholder">
+          <i class="bi bi-map"></i>
+          <span style="font-size:13px;">No map uploaded for this campus</span>
+          <br>
+          <span style="font-size:11px; margin-top:6px; display:block;">Upload a floor plan or satellite image below</span>
+        </div>
+        <img id="map-img" src="" alt="Campus Map" onclick="onMapClick(event)" style="cursor:crosshair;" />
+        <div id="map-overlay"></div>
+        <button id="map-upload-btn" onclick="document.getElementById('map-file-input').click()">
+          <i class="bi bi-upload me-1"></i> Upload Map
+        </button>
+        <input type="file" id="map-file-input" accept="image/*" onchange="handleMapUpload(event)" />
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Incident Detail -->
+  <div class="cad-panel">
+    <div class="panel-header">
+      <i class="bi bi-file-text"></i> Incident Detail
+      <span id="detail-inc-number" style="color:var(--cad-text); font-weight:400; margin-left:6px; font-size:11px;"></span>
+      <div id="detail-action-btns" style="margin-left:auto; display:none; gap:6px; display:flex;">
+        <button class="cad-btn-danger" style="padding:2px 8px; font-size:10px;" onclick="closeSelectedIncident()">Close</button>
+      </div>
+    </div>
+    <div class="panel-body" id="detail-body">
+      <div class="detail-empty">
+        <i class="bi bi-arrow-left-circle" style="font-size:32px; color:var(--cad-border); display:block; margin-bottom:8px;"></i>
+        <span style="color:var(--cad-muted); font-size:12px;">Select an incident from the queue</span>
+      </div>
+    </div>
+    <div id="log-input-row" style="display:none;">
+      <input type="text" id="log-input" placeholder="Add log entry..." onkeydown="if(event.key==='Enter') submitLogEntry()" />
+      <button id="log-submit" onclick="submitLogEntry()">ADD</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════
+     BOTTOM: Unit Status Bar
+══════════════════════════════════════ -->
+<div id="bottom-bar">
+  <div class="bar-header">
+    <i class="bi bi-people-fill"></i> Unit Status Board
+    <span id="unit-campus-label" style="color:var(--cad-text); font-weight:400; font-size:11px;"></span>
+    <button class="cad-btn-secondary ms-auto" style="padding:2px 8px; font-size:10px;" onclick="openAddUnit()">
+      <i class="bi bi-plus"></i> Add Unit
+    </button>
+  </div>
+  <div id="units-scroll">
+    <span style="color:var(--cad-muted); font-size:12px; padding:0 8px;">Select a campus to load units</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     NEW INCIDENT MODAL
+══════════════════════════════════════ -->
+<div class="modal fade" id="newIncidentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content cad-modal-content">
+      <div class="cad-modal-header">
+        <span class="cad-modal-title"><i class="bi bi-exclamation-triangle me-2"></i>New Incident</span>
+        <button type="button" class="btn-close btn-close-white" style="margin-left:auto;" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="padding:14px;">
+
+        <label class="cad-label">Campus</label>
+        <select class="cad-input" id="inc-campus" style="margin-bottom:10px;" onchange="populateCallTypes()">
+          <option value="">— Select —</option>
+        </select>
+
+        <label class="cad-label">Call Type</label>
+        <select class="cad-input" id="inc-calltype" onchange="autoSetPriority()">
+          <option value="">— Select —</option>
+        </select>
+
+        <label class="cad-label">Priority</label>
+        <div class="priority-pills">
+          <div class="priority-pill"><input type="radio" name="inc-priority" id="p1" value="1"><label for="p1">P1 — CRITICAL</label></div>
+          <div class="priority-pill"><input type="radio" name="inc-priority" id="p2" value="2"><label for="p2">P2 — URGENT</label></div>
+          <div class="priority-pill"><input type="radio" name="inc-priority" id="p3" value="3" checked><label for="p3">P3 — ROUTINE</label></div>
+          <div class="priority-pill"><input type="radio" name="inc-priority" id="p4" value="4"><label for="p4">P4 — ADMIN</label></div>
+        </div>
+
+        <label class="cad-label">Location / Description</label>
+        <input type="text" class="cad-input" id="inc-location" placeholder="e.g. Main Lobby, Parking Lot C, Room 201" />
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div>
+            <label class="cad-label">Caller Name</label>
+            <input type="text" class="cad-input" id="inc-caller-name" placeholder="Optional" />
+          </div>
+          <div>
+            <label class="cad-label">Caller Contact</label>
+            <input type="text" class="cad-input" id="inc-caller-contact" placeholder="Optional" />
+          </div>
+        </div>
+
+        <label class="cad-label">Initial Note</label>
+        <textarea class="cad-input" id="inc-note" rows="2" placeholder="Initial observations or caller statement..."></textarea>
+
+      </div>
+      <div class="modal-footer" style="background:var(--cad-header); border-top:1px solid var(--cad-border); padding:10px 14px; gap:8px;">
+        <button class="cad-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="cad-btn-primary" onclick="submitNewIncident()"><i class="bi bi-check-lg me-1"></i> Open Incident</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ADD UNIT MODAL
+══════════════════════════════════════ -->
+<div class="modal fade" id="addUnitModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content cad-modal-content">
+      <div class="cad-modal-header">
+        <span class="cad-modal-title"><i class="bi bi-person-plus me-2"></i>Add Unit</span>
+        <button type="button" class="btn-close btn-close-white" style="margin-left:auto;" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="padding:14px;">
+        <label class="cad-label">Campus</label>
+        <select class="cad-input" id="unit-campus-select"></select>
+
+        <label class="cad-label">Unit Label</label>
+        <input type="text" class="cad-input" id="unit-label" placeholder="e.g. Alpha-1, Officer Smith" />
+
+        <label class="cad-label">Type</label>
+        <select class="cad-input" id="unit-type">
+          <option value="volunteer">Volunteer</option>
+          <option value="officer">Hired Officer</option>
+          <option value="admin">Admin / Supervisor</option>
+        </select>
+      </div>
+      <div class="modal-footer" style="background:var(--cad-header); border-top:1px solid var(--cad-border); padding:10px 14px; gap:8px;">
+        <button class="cad-btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="cad-btn-primary" onclick="submitAddUnit()">Add Unit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Supabase JS (CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<script>
+/* ══════════════════════════════════
+   CONFIGURATION — EDIT THESE TWO VALUES
+   Get them from: Supabase → Project Settings → API
+══════════════════════════════════ */
+const SUPABASE_URL  = 'YOUR_SUPABASE_URL_HERE';
+const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY_HERE';
+
+/* ══════════════════════════════════
+   INIT
+══════════════════════════════════ */
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let state = {
+  campuses:       [],
+  callTypes:      [],
+  units:          [],
+  incidents:      [],
+  incidentLogs:   {},
+  selectedCampus: null,
+  selectedIncident: null,
+  mapImageUrl:    null,
+  operator:       'Operator'
+};
+
+/* ══════════════════════════════════
+   CLOCK
+══════════════════════════════════ */
+function tickClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('en-US', { hour12: false });
+}
+setInterval(tickClock, 1000);
+tickClock();
+
+/* ══════════════════════════════════
+   CONNECTION TEST + BOOT
+══════════════════════════════════ */
+async function boot() {
+  const badge = document.getElementById('conn-badge');
+
+  if (SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE') {
+    badge.className = 'badge bg-warning text-dark';
+    badge.textContent = 'NOT CONFIGURED';
+    loadDemoData();
+    return;
+  }
+
+  try {
+    const { error } = await db.from('campuses').select('id').limit(1);
+    if (error) throw error;
+    badge.className = 'badge bg-success';
+    badge.textContent = 'CONNECTED';
+    await loadCampuses();
+    await loadCallTypes();
+    subscribeRealtime();
+  } catch (e) {
+    badge.className = 'badge bg-danger';
+    badge.textContent = 'DB ERROR';
+    console.error('Supabase connection error:', e.message);
+    showAlert('Database connection failed. Check console. Running demo mode.', 'warning');
+    loadDemoData();
+  }
+}
+
+/* ══════════════════════════════════
+   DEMO DATA (runs when not configured)
+══════════════════════════════════ */
+function loadDemoData() {
+  state.campuses = [
+    { id: 1, name: 'Main Campus',   map_image_url: null },
+    { id: 2, name: 'North Campus',  map_image_url: null },
+    { id: 3, name: 'South Campus',  map_image_url: null },
+    { id: 4, name: 'West Campus',   map_image_url: null }
+  ];
+  state.callTypes = [
+    { id:1, code:'DOMV',    description:'Domestic Disturbance',  default_priority:1, category:'law' },
+    { id:2, code:'ALARM',   description:'Burglary Alarm',         default_priority:2, category:'law' },
+    { id:3, code:'WELCHK',  description:'Welfare Check',          default_priority:3, category:'law' },
+    { id:4, code:'SUSPP',   description:'Suspicious Person',      default_priority:3, category:'law' },
+    { id:5, code:'ASSAULT', description:'Assault',                default_priority:1, category:'law' },
+    { id:6, code:'MEDP1',   description:'Medical Emergency',      default_priority:1, category:'medical' },
+    { id:7, code:'CHESTP',  description:'Chest Pain',             default_priority:2, category:'medical' },
+    { id:8, code:'FIRESTR', description:'Structure Fire',         default_priority:1, category:'fire' },
+    { id:9, code:'ACCINJ',  description:'Accident with Injuries', default_priority:1, category:'law' },
+    { id:10,code:'THEFT',   description:'Theft Report',           default_priority:3, category:'law' },
+    { id:11,code:'DISRUPT', description:'Service Disruption',     default_priority:2, category:'law' },
+    { id:12,code:'CHILD',   description:'Lost/Missing Child',     default_priority:1, category:'law' },
+    { id:13,code:'ADMIN',   description:'Administrative',         default_priority:4, category:'admin' }
+  ];
+  state.units = [
+    { id:1, campus_id:1, unit_label:'Alpha-1',      unit_type:'officer',   status:'available' },
+    { id:2, campus_id:1, unit_label:'Alpha-2',      unit_type:'volunteer', status:'available' },
+    { id:3, campus_id:1, unit_label:'Bravo-1',      unit_type:'volunteer', status:'on_scene'  },
+    { id:4, campus_id:1, unit_label:'Sgt. Harris',  unit_type:'officer',   status:'assigned'  },
+    { id:5, campus_id:2, unit_label:'North-1',      unit_type:'volunteer', status:'available' },
+    { id:6, campus_id:2, unit_label:'North-2',      unit_type:'officer',   status:'available' }
+  ];
+  state.incidents = [
+    { id:1, campus_id:1, incident_number:'INC-001', created_at: new Date(Date.now()-1800000).toISOString(), priority:1, call_type:'ASSAULT', location_description:'Parking Lot B', status:'active', caller_name:'John Doe', caller_contact:'828-555-0100', pin_x:35, pin_y:60 },
+    { id:2, campus_id:1, incident_number:'INC-002', created_at: new Date(Date.now()-600000).toISOString(),  priority:3, call_type:'SUSPP',   location_description:'Main Lobby',   status:'active', caller_name:'', caller_contact:'', pin_x:55, pin_y:40 },
+    { id:3, campus_id:2, incident_number:'INC-003', created_at: new Date(Date.now()-300000).toISOString(),  priority:2, call_type:'ALARM',   location_description:'Fellowship Hall', status:'active', caller_name:'', caller_contact:'', pin_x:null, pin_y:null }
+  ];
+  state.incidentLogs = {
+    1: [
+      { id:1, incident_id:1, entry_text:'Incident created. Caller reports physical altercation in parking lot.', entered_by:'Operator', entered_at: new Date(Date.now()-1800000).toISOString() },
+      { id:2, incident_id:1, entry_text:'Alpha-1 dispatched to scene.', entered_by:'Operator', entered_at: new Date(Date.now()-1750000).toISOString() }
+    ],
+    2: [
+      { id:3, incident_id:2, entry_text:'Incident created. Individual observed at main entrance, acting unusual.', entered_by:'Operator', entered_at: new Date(Date.now()-600000).toISOString() }
+    ],
+    3: [
+      { id:4, incident_id:3, entry_text:'Alarm sounding in fellowship hall. Cause unknown.', entered_by:'Operator', entered_at: new Date(Date.now()-300000).toISOString() }
+    ]
+  };
+  renderCampusDropdowns();
+  // default to first campus
+  document.getElementById('campus-select').value = 1;
+  onCampusChange();
+}
+
+/* ══════════════════════════════════
+   LOAD FROM SUPABASE
+══════════════════════════════════ */
+async function loadCampuses() {
+  const { data, error } = await db.from('campuses').select('*').eq('is_active', true).order('name');
+  if (!error) { state.campuses = data; renderCampusDropdowns(); }
+}
+async function loadCallTypes() {
+  const { data, error } = await db.from('call_types').select('*').order('category').order('code');
+  if (!error) state.callTypes = data;
+}
+async function loadUnits(campusId) {
+  const { data, error } = await db.from('units').select('*').eq('campus_id', campusId).order('unit_label');
+  if (!error) { state.units = data; renderUnits(); }
+}
+async function loadIncidents(campusId) {
+  const { data, error } = await db.from('incidents').select('*').eq('campus_id', campusId).eq('status','active').order('priority').order('created_at');
+  if (!error) { state.incidents = data; renderQueue(); renderPins(); updateStats(); }
+}
+async function loadLog(incidentId) {
+  const { data, error } = await db.from('incident_log').select('*').eq('incident_id', incidentId).order('entered_at');
+  if (!error) { state.incidentLogs[incidentId] = data; renderDetailLog(); }
+}
+
+/* ══════════════════════════════════
+   REALTIME SUBSCRIPTIONS
+══════════════════════════════════ */
+function subscribeRealtime() {
+  db.channel('incidents-channel')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'incidents' }, () => {
+      if (state.selectedCampus) loadIncidents(state.selectedCampus.id);
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'units' }, () => {
+      if (state.selectedCampus) loadUnits(state.selectedCampus.id);
+    })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'incident_log' }, payload => {
+      const row = payload.new;
+      if (!state.incidentLogs[row.incident_id]) state.incidentLogs[row.incident_id] = [];
+      state.incidentLogs[row.incident_id].push(row);
+      if (state.selectedIncident && state.selectedIncident.id === row.incident_id) renderDetailLog();
+    })
+    .subscribe();
+}
+
+/* ══════════════════════════════════
+   CAMPUS CHANGE
+══════════════════════════════════ */
+function onCampusChange() {
+  const id = parseInt(document.getElementById('campus-select').value);
+  state.selectedCampus = state.campuses.find(c => c.id === id) || null;
+  state.selectedIncident = null;
+
+  document.getElementById('map-campus-label').textContent = state.selectedCampus ? state.selectedCampus.name : '';
+  document.getElementById('unit-campus-label').textContent = state.selectedCampus ? '— ' + state.selectedCampus.name : '';
+
+  if (!state.selectedCampus) { renderQueue(); renderUnits(); return; }
+
+  // Load map
+  if (state.selectedCampus.map_image_url) {
+    showMap(state.selectedCampus.map_image_url);
+  } else {
+    hideMap();
+  }
+
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+    loadUnits(state.selectedCampus.id);
+    loadIncidents(state.selectedCampus.id);
+  } else {
+    // demo: filter locally
+    renderUnits();
+    renderQueue();
+    renderPins();
+    updateStats();
+  }
+
+  clearDetailPanel();
+}
+
+/* ══════════════════════════════════
+   RENDER CAMPUS DROPDOWNS
+══════════════════════════════════ */
+function renderCampusDropdowns() {
+  const selects = ['campus-select','inc-campus','unit-campus-select'];
+  selects.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = '<option value="">— Select —</option>';
+    state.campuses.forEach(c => {
+      el.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+    });
+  });
+}
+
+/* ══════════════════════════════════
+   RENDER UNIT BOARD
+══════════════════════════════════ */
+function renderUnits() {
+  const el = document.getElementById('units-scroll');
+  const campusId = state.selectedCampus ? state.selectedCampus.id : null;
+  const units = campusId ? state.units.filter(u => u.campus_id === campusId) : state.units;
+
+  if (!units.length) {
+    el.innerHTML = `<span style="color:var(--cad-muted); font-size:12px; padding:0 8px;">No units for this campus</span>`;
+    return;
+  }
+
+  el.innerHTML = units.map(u => `
+    <div class="unit-card status-${u.status}" id="unit-${u.id}">
+      <div class="unit-label">${escHtml(u.unit_label)}</div>
+      <div class="unit-type">${u.unit_type.toUpperCase()}</div>
+      <div>
+        <span class="unit-status-dot"></span>
+        <span class="unit-status-text">${formatStatus(u.status)}</span>
+      </div>
+      <select class="unit-status-select" onchange="changeUnitStatus(${u.id}, this.value)">
+        <option value="available"   ${u.status==='available'   ?'selected':''}>Available</option>
+        <option value="assigned"    ${u.status==='assigned'    ?'selected':''}>Assigned</option>
+        <option value="on_scene"    ${u.status==='on_scene'    ?'selected':''}>On Scene</option>
+        <option value="unavailable" ${u.status==='unavailable' ?'selected':''}>Unavailable</option>
+      </select>
+    </div>
+  `).join('');
+
+  updateStats();
+}
+
+async function changeUnitStatus(unitId, newStatus) {
+  const unit = state.units.find(u => u.id === unitId);
+  if (!unit) return;
+  unit.status = newStatus;
+
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+    await db.from('units').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', unitId);
+  }
+  renderUnits();
+}
+
+/* ══════════════════════════════════
+   RENDER INCIDENT QUEUE
+══════════════════════════════════ */
+function renderQueue() {
+  const el = document.getElementById('incident-queue');
+  const campusId = state.selectedCampus ? state.selectedCampus.id : null;
+  const list = campusId ? state.incidents.filter(i => i.campus_id === campusId && i.status === 'active') : [];
+
+  const countEl = document.getElementById('queue-count');
+  if (list.length) {
+    countEl.textContent = list.length;
+    countEl.style.display = 'inline-block';
+  } else {
+    countEl.style.display = 'none';
+  }
+
+  if (!list.length) {
+    el.innerHTML = `<div class="detail-empty"><i class="bi bi-inbox" style="font-size:32px; color:var(--cad-border); display:block; margin-bottom:8px;"></i><span style="color:var(--cad-muted); font-size:12px;">No active incidents</span></div>`;
+    return;
+  }
+
+  el.innerHTML = list.map(inc => `
+    <div class="incident-card p${inc.priority} ${state.selectedIncident && state.selectedIncident.id === inc.id ? 'active' : ''}"
+         onclick="selectIncident(${inc.id})">
+      <div class="inc-meta">
+        <span class="inc-number">${inc.incident_number || 'INC-???'}</span>
+        <span class="priority-badge">P${inc.priority}</span>
+      </div>
+      <div class="inc-type">${escHtml(inc.call_type || 'UNKNOWN')}</div>
+      <div class="inc-location"><i class="bi bi-geo-alt me-1"></i>${escHtml(inc.location_description || '—')}</div>
+      <div class="inc-time">${timeAgo(inc.created_at)}</div>
+    </div>
+  `).join('');
+}
+
+/* ══════════════════════════════════
+   SELECT INCIDENT → DETAIL
+══════════════════════════════════ */
+function selectIncident(id) {
+  state.selectedIncident = state.incidents.find(i => i.id === id) || null;
+  renderQueue();
+  renderDetailPanel();
+  if (state.selectedIncident) {
+    if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+      loadLog(id);
+    } else {
+      renderDetailLog();
+    }
+  }
+}
+
+function renderDetailPanel() {
+  const inc = state.selectedIncident;
+  const body = document.getElementById('detail-body');
+  const logRow = document.getElementById('log-input-row');
+  const actionBtns = document.getElementById('detail-action-btns');
+
+  if (!inc) {
+    clearDetailPanel();
+    return;
+  }
+
+  document.getElementById('detail-inc-number').textContent = inc.incident_number || '';
+  actionBtns.style.display = 'flex';
+  logRow.style.display = 'flex';
+
+  const ct = state.callTypes.find(c => c.code === inc.call_type);
+  const ctLabel = ct ? `${ct.code} — ${ct.description}` : inc.call_type;
+
+  body.innerHTML = `
+    <div class="detail-field">
+      <div class="detail-label">Status</div>
+      <div class="detail-value" style="color:var(--cad-p${inc.priority}); font-weight:700;">
+        PRIORITY ${inc.priority} — ACTIVE
+      </div>
+    </div>
+    <div class="detail-field">
+      <div class="detail-label">Call Type</div>
+      <div class="detail-value">${escHtml(ctLabel)}</div>
+    </div>
+    <div class="detail-field">
+      <div class="detail-label">Location</div>
+      <div class="detail-value">${escHtml(inc.location_description || '—')}</div>
+    </div>
+    <div class="detail-field">
+      <div class="detail-label">Opened</div>
+      <div class="detail-value">${new Date(inc.created_at).toLocaleString()}</div>
+    </div>
+    ${inc.caller_name ? `<div class="detail-field"><div class="detail-label">Caller</div><div class="detail-value">${escHtml(inc.caller_name)}${inc.caller_contact ? ' · ' + escHtml(inc.caller_contact) : ''}</div></div>` : ''}
+
+    <div class="divider-label">Narrative Log</div>
+    <ul id="log-list"></ul>
+  `;
+
+  renderDetailLog();
+}
+
+function renderDetailLog() {
+  const el = document.getElementById('log-list');
+  if (!el || !state.selectedIncident) return;
+  const logs = state.incidentLogs[state.selectedIncident.id] || [];
+  if (!logs.length) {
+    el.innerHTML = `<li style="color:var(--cad-muted); font-size:12px; padding:4px 8px;">No log entries yet.</li>`;
+    return;
+  }
+  el.innerHTML = logs.map(l => `
+    <li class="log-entry">
+      <div class="log-time">${new Date(l.entered_at).toLocaleTimeString('en-US', {hour12:false})}</div>
+      <div class="log-text">${escHtml(l.entry_text)}</div>
+      <div class="log-by">${escHtml(l.entered_by || 'System')}</div>
+    </li>
+  `).join('');
+  // scroll to bottom
+  el.scrollIntoView && el.parentElement && (el.parentElement.scrollTop = el.parentElement.scrollHeight);
+}
+
+function clearDetailPanel() {
+  document.getElementById('detail-inc-number').textContent = '';
+  document.getElementById('detail-action-btns').style.display = 'none';
+  document.getElementById('log-input-row').style.display = 'none';
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-empty">
+      <i class="bi bi-arrow-left-circle" style="font-size:32px; color:var(--cad-border); display:block; margin-bottom:8px;"></i>
+      <span style="color:var(--cad-muted); font-size:12px;">Select an incident from the queue</span>
+    </div>`;
+}
+
+/* ══════════════════════════════════
+   LOG ENTRY SUBMIT
+══════════════════════════════════ */
+async function submitLogEntry() {
+  const input = document.getElementById('log-input');
+  const text = input.value.trim();
+  if (!text || !state.selectedIncident) return;
+
+  const entry = {
+    incident_id: state.selectedIncident.id,
+    entry_text: text,
+    entered_by: state.operator,
+    entered_at: new Date().toISOString()
+  };
+
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+    await db.from('incident_log').insert(entry);
+  } else {
+    if (!state.incidentLogs[entry.incident_id]) state.incidentLogs[entry.incident_id] = [];
+    entry.id = Date.now();
+    state.incidentLogs[entry.incident_id].push(entry);
+    renderDetailLog();
+  }
+
+  input.value = '';
+}
+
+/* ══════════════════════════════════
+   NEW INCIDENT SUBMIT
+══════════════════════════════════ */
+function openNewIncident() {
+  populateCallTypes();
+  // pre-select current campus
+  if (state.selectedCampus) document.getElementById('inc-campus').value = state.selectedCampus.id;
+  document.getElementById('p3').checked = true;
+  new bootstrap.Modal(document.getElementById('newIncidentModal')).show();
+}
+
+function populateCallTypes() {
+  const el = document.getElementById('inc-calltype');
+  el.innerHTML = '<option value="">— Select Call Type —</option>';
+  const cats = [...new Set(state.callTypes.map(c => c.category))];
+  cats.forEach(cat => {
+    const group = document.createElement('optgroup');
+    group.label = cat.toUpperCase();
+    state.callTypes.filter(c => c.category === cat).forEach(ct => {
+      const opt = document.createElement('option');
+      opt.value = ct.code;
+      opt.textContent = `${ct.code} — ${ct.description}`;
+      opt.dataset.priority = ct.default_priority;
+      group.appendChild(opt);
+    });
+    el.appendChild(group);
+  });
+}
+
+function autoSetPriority() {
+  const el = document.getElementById('inc-calltype');
+  const opt = el.options[el.selectedIndex];
+  if (opt && opt.dataset.priority) {
+    const p = opt.dataset.priority;
+    const radio = document.getElementById('p' + p);
+    if (radio) radio.checked = true;
+  }
+}
+
+async function submitNewIncident() {
+  const campusId = parseInt(document.getElementById('inc-campus').value);
+  const callType = document.getElementById('inc-calltype').value;
+  const priority = parseInt(document.querySelector('input[name="inc-priority"]:checked')?.value || 3);
+  const location = document.getElementById('inc-location').value.trim();
+  const callerName = document.getElementById('inc-caller-name').value.trim();
+  const callerContact = document.getElementById('inc-caller-contact').value.trim();
+  const note = document.getElementById('inc-note').value.trim();
+
+  if (!campusId || !callType || !location) {
+    showAlert('Campus, Call Type, and Location are required.', 'danger');
+    return;
+  }
+
+  const now = new Date().toISOString();
+  const incNum = 'INC-' + String(state.incidents.length + 1).padStart(4, '0');
+
+  const newInc = {
+    campus_id: campusId,
+    incident_number: incNum,
+    created_at: now,
+    priority,
+    call_type: callType,
+    location_description: location,
+    caller_name: callerName,
+    caller_contact: callerContact,
+    status: 'active',
+    pin_x: null,
+    pin_y: null
+  };
+
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+    const { data, error } = await db.from('incidents').insert(newInc).select().single();
+    if (error) { showAlert('Error creating incident: ' + error.message, 'danger'); return; }
+    newInc.id = data.id;
+    if (note) {
+      await db.from('incident_log').insert({ incident_id: data.id, entry_text: note, entered_by: state.operator, entered_at: now });
+    }
+  } else {
+    newInc.id = Date.now();
+    state.incidents.push(newInc);
+    if (note) {
+      state.incidentLogs[newInc.id] = [{ id: Date.now(), incident_id: newInc.id, entry_text: note, entered_by: state.operator, entered_at: now }];
+    }
+    renderQueue();
+    renderPins();
+    updateStats();
+  }
+
+  bootstrap.Modal.getInstance(document.getElementById('newIncidentModal')).hide();
+  showAlert(`Incident ${incNum} opened.`, 'success');
+
+  // select new incident
+  state.selectedIncident = newInc;
+  renderDetailPanel();
+  renderDetailLog();
+}
+
+/* ══════════════════════════════════
+   CLOSE INCIDENT
+══════════════════════════════════ */
+async function closeSelectedIncident() {
+  if (!state.selectedIncident) return;
+  if (!confirm(`Close incident ${state.selectedIncident.incident_number}?`)) return;
+
+  state.selectedIncident.status = 'closed';
+
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+    await db.from('incidents').update({ status: 'closed' }).eq('id', state.selectedIncident.id);
+    await db.from('incident_log').insert({ incident_id: state.selectedIncident.id, entry_text: 'Incident closed.', entered_by: state.operator, entered_at: new Date().toISOString() });
+  } else {
+    const inc = state.incidents.find(i => i.id === state.selectedIncident.id);
+    if (inc) inc.status = 'closed';
+  }
+
+  showAlert(`${state.selectedIncident.incident_number} closed.`, 'success');
+  state.selectedIncident = null;
+  clearDetailPanel();
+  renderQueue();
+  renderPins();
+  updateStats();
+}
+
+/* ══════════════════════════════════
+   ADD UNIT
+══════════════════════════════════ */
+function openAddUnit() {
+  document.getElementById('unit-label').value = '';
+  if (state.selectedCampus) document.getElementById('unit-campus-select').value = state.selectedCampus.id;
+  new bootstrap.Modal(document.getElementById('addUnitModal')).show();
+}
+
+async function submitAddUnit() {
+  const campusId = parseInt(document.getElementById('unit-campus-select').value);
+  const label = document.getElementById('unit-label').value.trim();
+  const type = document.getElementById('unit-type').value;
+
+  if (!campusId || !label) { showAlert('Campus and Unit Label are required.', 'danger'); return; }
+
+  const newUnit = { campus_id: campusId, unit_label: label, unit_type: type, status: 'available', updated_at: new Date().toISOString() };
+
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+    const { data, error } = await db.from('units').insert(newUnit).select().single();
+    if (error) { showAlert('Error adding unit: ' + error.message, 'danger'); return; }
+    newUnit.id = data.id;
+  } else {
+    newUnit.id = Date.now();
+    state.units.push(newUnit);
+    renderUnits();
+  }
+
+  bootstrap.Modal.getInstance(document.getElementById('addUnitModal')).hide();
+  showAlert(`Unit ${label} added.`, 'success');
+}
+
+/* ══════════════════════════════════
+   MAP
+══════════════════════════════════ */
+function showMap(url) {
+  const img = document.getElementById('map-img');
+  const ph = document.getElementById('map-placeholder');
+  img.src = url;
+  img.style.display = 'block';
+  ph.style.display = 'none';
+  renderPins();
+}
+
+function hideMap() {
+  const img = document.getElementById('map-img');
+  const ph = document.getElementById('map-placeholder');
+  img.style.display = 'none';
+  ph.style.display = 'block';
+  document.getElementById('map-overlay').innerHTML = '';
+}
+
+function handleMapUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE' && state.selectedCampus) {
+    uploadMapToSupabase(file);
+  } else {
+    // Demo: use local object URL
+    const url = URL.createObjectURL(file);
+    state.mapImageUrl = url;
+    if (state.selectedCampus) state.selectedCampus.map_image_url = url;
+    showMap(url);
+    showAlert('Map loaded (local preview — not saved to database in demo mode).', 'info');
+  }
+}
+
+async function uploadMapToSupabase(file) {
+  if (!state.selectedCampus) return;
+  const path = `maps/campus-${state.selectedCampus.id}-${Date.now()}.${file.name.split('.').pop()}`;
+  const { data, error } = await db.storage.from('campus-maps').upload(path, file, { upsert: true });
+  if (error) { showAlert('Map upload failed: ' + error.message, 'danger'); return; }
+  const { data: urlData } = db.storage.from('campus-maps').getPublicUrl(path);
+  const publicUrl = urlData.publicUrl;
+  await db.from('campuses').update({ map_image_url: publicUrl }).eq('id', state.selectedCampus.id);
+  state.selectedCampus.map_image_url = publicUrl;
+  showMap(publicUrl);
+  showAlert('Map uploaded and saved.', 'success');
+}
+
+function onMapClick(event) {
+  if (!state.selectedIncident) return;
+  const img = document.getElementById('map-img');
+  const rect = img.getBoundingClientRect();
+  const x = ((event.clientX - rect.left) / rect.width * 100).toFixed(1);
+  const y = ((event.clientY - rect.top) / rect.height * 100).toFixed(1);
+
+  state.selectedIncident.pin_x = parseFloat(x);
+  state.selectedIncident.pin_y = parseFloat(y);
+
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+    db.from('incidents').update({ pin_x: x, pin_y: y }).eq('id', state.selectedIncident.id);
+  }
+
+  renderPins();
+  showAlert(`Pin placed at ${x}%, ${y}%`, 'info');
+}
+
+function renderPins() {
+  const overlay = document.getElementById('map-overlay');
+  overlay.innerHTML = '';
+  const campusId = state.selectedCampus ? state.selectedCampus.id : null;
+  if (!campusId) return;
+
+  state.incidents.filter(i => i.campus_id === campusId && i.status === 'active' && i.pin_x !== null).forEach(inc => {
+    const pin = document.createElement('div');
+    pin.className = `map-pin p${inc.priority}`;
+    pin.style.left = inc.pin_x + '%';
+    pin.style.top = inc.pin_y + '%';
+    pin.title = `${inc.incident_number}: ${inc.call_type} — ${inc.location_description}`;
+    pin.onclick = () => selectIncident(inc.id);
+    overlay.appendChild(pin);
+  });
+}
+
+/* ══════════════════════════════════
+   STATS BAR
+══════════════════════════════════ */
+function updateStats() {
+  const campusId = state.selectedCampus ? state.selectedCampus.id : null;
+  const active = campusId ? state.incidents.filter(i => i.campus_id === campusId && i.status === 'active').length : 0;
+  const avail  = campusId ? state.units.filter(u => u.campus_id === campusId && u.status === 'available').length : 0;
+  document.getElementById('stat-active').textContent = active;
+  document.getElementById('stat-avail').textContent = avail;
+}
+
+/* ══════════════════════════════════
+   UTILITIES
+══════════════════════════════════ */
+function formatStatus(s) {
+  return { available:'AVAILABLE', assigned:'ASSIGNED', on_scene:'ON SCENE', unavailable:'UNAVAILABLE' }[s] || s.toUpperCase();
+}
+
+function timeAgo(iso) {
+  const diff = Math.floor((Date.now() - new Date(iso)) / 60000);
+  if (diff < 1) return 'Just now';
+  if (diff < 60) return diff + ' min ago';
+  return Math.floor(diff / 60) + 'h ' + (diff % 60) + 'm ago';
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showAlert(msg, type) {
+  const el = document.createElement('div');
+  el.className = `alert-flash alert alert-${type}`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+/* ══════════════════════════════════
+   KEYBOARD SHORTCUTS
+══════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+  if (e.key === 'n' || e.key === 'N') openNewIncident();
+  if (e.key === 'Escape') { state.selectedIncident = null; clearDetailPanel(); renderQueue(); }
+});
+
+/* ══════════════════════════════════
+   BOOT
+══════════════════════════════════ */
+boot();
+</script>
+</body>
+</html>
