@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SecureCAD — Biltmore Church Security</title>
+  <title>Biltmore Church CAD</title>
 
   <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -771,6 +771,9 @@
       color: #5a8aaa; border-bottom: 1px solid var(--cad-border);
       padding-bottom: 3px; margin: 8px 0 6px; font-weight: 600;
     }
+
+    .unit-remove-btn { float:right; background:none; border:none; color:var(--cad-muted); font-size:11px; cursor:pointer; padding:0; line-height:1; }
+    .unit-remove-btn:hover { color:var(--cad-p1); }
   </style>
 </head>
 <body>
@@ -780,8 +783,8 @@
 ══════════════════════════════════════ -->
 <div id="login-screen">
   <div class="login-box">
-    <div class="login-brand"><i class="bi bi-shield-fill me-2"></i>SecureCAD</div>
-    <div class="login-sub">Biltmore Church Security Operations</div>
+    <div class="login-brand"><i class="bi bi-shield-fill me-2"></i>Biltmore Church CAD</div>
+    <div class="login-sub">Security Operations Center</div>
     <div class="login-tab-row">
       <button class="login-tab active" id="tab-soc" onclick="switchLoginTab('soc')">SOC ACCESS</button>
       <button class="login-tab" id="tab-admin" onclick="switchLoginTab('admin')">ADMIN</button>
@@ -828,7 +831,7 @@
      TOP BAR
 ══════════════════════════════════════ -->
 <div id="topbar">
-  <div class="brand"><i class="bi bi-shield-fill me-1"></i> SecureCAD</div>
+  <div class="brand"><i class="bi bi-shield-fill me-1"></i> Biltmore Church CAD</div>
 
   <select class="campus-select" id="campus-select" onchange="onCampusChange()">
     <option value="">— Select Campus —</option>
@@ -1415,28 +1418,44 @@ function renderUnits() {
   const el = document.getElementById('units-scroll');
   const campusId = state.selectedCampus ? state.selectedCampus.id : null;
   const units = campusId ? state.units.filter(u => u.campus_id === campusId) : state.units;
+  const hasRoster = campusId ? getRosterForCampusDay(campusId, state.serviceDay).length > 0 : false;
+
+  document.getElementById('btn-load-roster').style.display  = (campusId && hasRoster && !units.length) ? 'inline-block' : 'none';
+  document.getElementById('btn-clear-service').style.display = (campusId && units.length) ? 'inline-block' : 'none';
 
   if (!units.length) {
-    el.innerHTML = `<span style="color:var(--cad-muted); font-size:12px; padding:0 8px;">No units for this campus</span>`;
+    el.innerHTML = `<span style="color:var(--cad-muted); font-size:12px; padding:0 8px;">${campusId ? (hasRoster ? 'No units loaded — click <strong style="color:var(--cad-text);">Load Roster</strong> to begin service' : 'No roster template for this campus/day') : 'Select a campus to load units'}</span>`;
     return;
   }
 
-  el.innerHTML = units.map(u => `
-    <div class="unit-card status-${u.status}" id="unit-${u.id}">
-      <div class="unit-label">${escHtml(u.unit_label)}</div>
-      <div class="unit-type">${u.unit_type.toUpperCase()}</div>
-      <div>
-        <span class="unit-status-dot"></span>
-        <span class="unit-status-text">${formatStatus(u.status)}</span>
+  const order = { officer:0, staff:1, volunteer:2 };
+  const sorted = [...units].sort((a,b) => (order[a.unit_type]||9)-(order[b.unit_type]||9) || a.unit_label.localeCompare(b.unit_label));
+
+  el.innerHTML = sorted.map(u => {
+    const assignedInc = u.incident_id ? state.incidents.find(i => i.id === u.incident_id) : null;
+    const assignLabel = assignedInc ? escHtml(assignedInc.incident_number) : '';
+    return `
+    <div class="unit-card status-${u.status}" id="unit-card-${u.id}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div class="unit-label">${escHtml(u.unit_label)}</div>
+        <button class="unit-remove-btn" onclick="removeUnit(${u.id})" title="Remove unit"><i class="bi bi-x"></i></button>
       </div>
+      <div class="unit-type">${formatUnitType(u.unit_type)}</div>
+      <div><span class="unit-status-dot"></span><span class="unit-status-text">${formatStatus(u.status)}</span></div>
+      ${assignLabel ? `<div style="font-size:9px;color:var(--cad-accent);margin-top:2px;font-family:'Courier New',monospace;">&#8618; ${assignLabel}</div>` : ''}
       <select class="unit-status-select" onchange="changeUnitStatus(${u.id}, this.value)">
         <option value="available"   ${u.status==='available'   ?'selected':''}>Available</option>
         <option value="assigned"    ${u.status==='assigned'    ?'selected':''}>Assigned</option>
         <option value="on_scene"    ${u.status==='on_scene'    ?'selected':''}>On Scene</option>
         <option value="unavailable" ${u.status==='unavailable' ?'selected':''}>Unavailable</option>
       </select>
-    </div>
-  `).join('');
+      <select class="unit-status-select" style="margin-top:3px;" onchange="assignUnitToIncident(${u.id}, this.value)">
+        <option value="">— Assign to Call —</option>
+        ${state.incidents.filter(i=>i.campus_id===u.campus_id&&i.status==='active').map(i=>`<option value="${i.id}" ${u.incident_id===i.id?'selected':''}>${escHtml(i.incident_number)} ${escHtml(i.call_type)}</option>`).join('')}
+        ${u.incident_id ? '<option value="clear">Clear Assignment</option>' : ''}
+      </select>
+    </div>`;
+  }).join('');
 
   updateStats();
 }
@@ -1445,11 +1464,48 @@ async function changeUnitStatus(unitId, newStatus) {
   const unit = state.units.find(u => u.id === unitId);
   if (!unit) return;
   unit.status = newStatus;
+  await db.from('units').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', unitId);
+  const card = document.getElementById('unit-card-' + unitId);
+  if (card) {
+    card.className = 'unit-card status-' + newStatus;
+    const txt = card.querySelector('.unit-status-text');
+    if (txt) txt.textContent = formatStatus(newStatus);
+  }
+  updateStats();
+}
 
-  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
-    await db.from('units').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', unitId);
+async function assignUnitToIncident(unitId, incidentId) {
+  const unit = state.units.find(u => u.id === unitId);
+  if (!unit) return;
+  const clearing = incidentId === 'clear' || !incidentId;
+  const newIncidentId = clearing ? null : parseInt(incidentId);
+  const newStatus = clearing ? 'available' : 'assigned';
+  unit.incident_id = newIncidentId;
+  unit.status = newStatus;
+  await db.from('units').update({
+    incident_id: newIncidentId,
+    status: newStatus,
+    updated_at: new Date().toISOString()
+  }).eq('id', unitId);
+  if (!clearing) {
+    const inc = state.incidents.find(i => i.id === newIncidentId);
+    if (inc) {
+      await db.from('incident_log').insert({
+        incident_id: newIncidentId,
+        entry_text: `Unit ${unit.unit_label} assigned.`,
+        entered_by: 'SOC',
+        entered_at: new Date().toISOString()
+      });
+    }
   }
   renderUnits();
+}
+
+async function removeUnit(unitId) {
+  state.units = state.units.filter(u => u.id !== unitId);
+  await db.from('units').delete().eq('id', unitId);
+  renderUnits();
+  updateStats();
 }
 
 /* ══════════════════════════════════
@@ -1620,19 +1676,30 @@ function openNewIncident() {
 function populateCallTypes() {
   const el = document.getElementById('inc-calltype');
   el.innerHTML = '<option value="">— Select Call Type —</option>';
-  const cats = [...new Set(state.callTypes.map(c => c.category))];
-  cats.forEach(cat => {
-    const group = document.createElement('optgroup');
-    group.label = cat.toUpperCase();
-    state.callTypes.filter(c => c.category === cat).forEach(ct => {
+  // Group by category if present, otherwise flat list
+  const cats = [...new Set(state.callTypes.map(c => c.category).filter(Boolean))];
+  if (cats.length > 0) {
+    cats.forEach(cat => {
+      const group = document.createElement('optgroup');
+      group.label = cat.toUpperCase();
+      state.callTypes.filter(c => c.category === cat).forEach(ct => {
+        const opt = document.createElement('option');
+        opt.value = ct.code;
+        opt.textContent = `${ct.code} — ${ct.description}`;
+        opt.dataset.priority = ct.default_priority || 3;
+        group.appendChild(opt);
+      });
+      el.appendChild(group);
+    });
+  } else {
+    state.callTypes.forEach(ct => {
       const opt = document.createElement('option');
       opt.value = ct.code;
       opt.textContent = `${ct.code} — ${ct.description}`;
-      opt.dataset.priority = ct.default_priority;
-      group.appendChild(opt);
+      opt.dataset.priority = ct.default_priority || 3;
+      el.appendChild(opt);
     });
-    el.appendChild(group);
-  });
+  }
 }
 
 function autoSetPriority() {
@@ -1710,20 +1777,26 @@ async function closeSelectedIncident() {
   if (!state.selectedIncident) return;
   if (!confirm(`Close incident ${state.selectedIncident.incident_number}?`)) return;
 
+  const incId = state.selectedIncident.id;
   state.selectedIncident.status = 'closed';
 
-  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
-    await db.from('incidents').update({ status: 'closed' }).eq('id', state.selectedIncident.id);
-    await db.from('incident_log').insert({ incident_id: state.selectedIncident.id, entry_text: 'Incident closed.', entered_by: 'SOC', entered_at: new Date().toISOString() });
-  } else {
-    const inc = state.incidents.find(i => i.id === state.selectedIncident.id);
-    if (inc) inc.status = 'closed';
+  await db.from('incidents').update({ status: 'closed' }).eq('id', incId);
+  await db.from('incident_log').insert({ incident_id: incId, entry_text: 'Incident closed.', entered_by: 'SOC', entered_at: new Date().toISOString() });
+
+  // Clear unit assignments for this incident and set them back to available
+  const assignedUnits = state.units.filter(u => u.incident_id === incId);
+  for (const u of assignedUnits) {
+    u.incident_id = null;
+    u.status = 'available';
+    await db.from('units').update({ incident_id: null, status: 'available', updated_at: new Date().toISOString() }).eq('id', u.id);
   }
 
-  showAlert(`${state.selectedIncident.incident_number} closed.`, 'success');
+  state.incidents = state.incidents.filter(i => i.id !== incId);
+  showAlert(`${state.selectedIncident.incident_number || 'Incident'} closed.`, 'success');
   state.selectedIncident = null;
   clearDetailPanel();
   renderQueue();
+  renderUnits();
   renderPins();
   updateStats();
 }
