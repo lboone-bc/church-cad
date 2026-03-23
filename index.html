@@ -1165,7 +1165,7 @@
     </div>
     <!-- LOG TAB -->
     <div class="tab-pane" id="pane-log">
-      <ul id="log-list"></ul>
+      <ul id="log-list-log"></ul>
     </div>
     <!-- HISTORY TAB -->
     <div class="tab-pane" id="pane-history">
@@ -2199,24 +2199,34 @@ async function assignUnitToIncident(unitId, incidentId) {
   const clearing = incidentId === 'clear' || !incidentId;
   const newIncidentId = clearing ? null : parseInt(incidentId);
   const newStatus = clearing ? 'available' : 'assigned';
+  const now = new Date().toISOString();
+
   unit.incident_id = newIncidentId;
   unit.status = newStatus;
-  await getDb().from('units').update({
-    incident_id: newIncidentId,
-    status: newStatus,
-    updated_at: new Date().toISOString()
-  }).eq('id', unitId);
+
+  if (getDb()) {
+    await getDb().from('units').update({
+      incident_id: newIncidentId,
+      status: newStatus,
+      updated_at: now
+    }).eq('id', unitId);
+  }
+
   if (!clearing) {
     const inc = state.incidents.find(i => i.id === newIncidentId);
     if (inc) {
-      await getDb().from('incident_log').insert({
+      const entry = {
         incident_id: newIncidentId,
         entry_text: `Unit ${unit.unit_label} assigned.`,
         entered_by: 'SOC',
-        entered_at: new Date().toISOString()
-      });
+        entered_at: now
+      };
+      upsertLocalLog(entry);
+      renderDetailLog();
+      if (getDb()) await getDb().from('incident_log').insert(entry);
     }
   }
+
   renderUnits();
 }
 
@@ -2323,29 +2333,31 @@ function renderDetailPanel() {
     ${inc.caller_name ? `<div class="detail-field"><div class="detail-label">Caller</div><div class="detail-value">${escHtml(inc.caller_name)}${inc.caller_contact ? ' · ' + escHtml(inc.caller_contact) : ''}</div></div>` : ''}
 
     <div class="divider-label">Narrative Log</div>
-    <ul id="log-list"></ul>
+    <ul id="log-list-general"></ul>
   `;
 
   renderDetailLog();
 }
 
 function renderDetailLog() {
-  const el = document.getElementById('log-list');
-  if (!el || !state.selectedIncident) return;
+  if (!state.selectedIncident) return;
   const logs = state.incidentLogs[state.selectedIncident.id] || [];
-  if (!logs.length) {
-    el.innerHTML = `<li style="color:var(--cad-muted); font-size:12px; padding:4px 8px;">No log entries yet.</li>`;
-    return;
-  }
-  el.innerHTML = logs.map(l => `
-    <li class="log-entry">
-      <div class="log-time">${new Date(l.entered_at).toLocaleTimeString('en-US', {hour12:false})}</div>
-      <div class="log-text">${escHtml(l.entry_text)}</div>
-      <div class="log-by">${escHtml(l.entered_by || 'System')}</div>
-    </li>
-  `).join('');
-  // scroll to bottom
-  el.scrollIntoView && el.parentElement && (el.parentElement.scrollTop = el.parentElement.scrollHeight);
+  const html = !logs.length
+    ? `<li style="color:var(--cad-muted); font-size:12px; padding:4px 8px;">No log entries yet.</li>`
+    : logs.map(l => `
+      <li class="log-entry">
+        <div class="log-time">${new Date(l.entered_at).toLocaleTimeString('en-US', {hour12:false})}</div>
+        <div class="log-text">${escHtml(l.entry_text)}</div>
+        <div class="log-by">${escHtml(l.entered_by || 'System')}</div>
+      </li>
+    `).join('');
+
+  ['log-list-general','log-list-log'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = html;
+    el.scrollIntoView && el.parentElement && (el.parentElement.scrollTop = el.parentElement.scrollHeight);
+  });
 }
 
 function clearDetailPanel() {
@@ -2376,14 +2388,16 @@ async function submitLogEntry() {
     entered_at: new Date().toISOString()
   };
 
-  if (getDb()) {
-    await getDb().from('incident_log').insert(entry);
-  } else {
-    upsertLocalLog(entry);
-    renderDetailLog();
-  }
-
+  upsertLocalLog(entry);
+  renderDetailLog();
   input.value = '';
+
+  if (getDb()) {
+    const { error } = await getDb().from('incident_log').insert(entry);
+    if (error) {
+      showAlert('Log entry failed to save: ' + error.message, 'danger');
+    }
+  }
 }
 
 /* ══════════════════════════════════
@@ -2457,10 +2471,17 @@ async function submitNewIncident() {
     const { data, error } = await getDb().from('incidents').insert(newInc).select().single();
     if (error) { showAlert('Error creating incident: ' + error.message, 'danger'); return; }
     newInc.id = data.id;
+    state.incidents.unshift(newInc);
+    upsertLocalLog({ incident_id: data.id, entry_text: `Incident created at ${location}.`, entered_by: 'SOC', entered_at: now });
     await getDb().from('incident_log').insert({ incident_id: data.id, entry_text: `Incident created at ${location}.`, entered_by: 'SOC', entered_at: now });
     if (note) {
+      upsertLocalLog({ incident_id: data.id, entry_text: note, entered_by: 'SOC', entered_at: now });
       await getDb().from('incident_log').insert({ incident_id: data.id, entry_text: note, entered_by: 'SOC', entered_at: now });
     }
+    renderQueue();
+    renderPins();
+    updateStats();
+    renderUnits();
   } else {
     newInc.id = Date.now();
     state.incidents.push(newInc);
@@ -2518,6 +2539,10 @@ async function closeSelectedIncident() {
   renderUnits();
   renderPins();
   updateStats();
+  if (getDb() && state.selectedCampus) {
+    loadUnits(state.selectedCampus.id);
+    loadIncidents(state.selectedCampus.id);
+  }
 }
 
 /* ══════════════════════════════════
@@ -2654,7 +2679,7 @@ function switchDetailTab(tab) {
     if (paneEl) paneEl.classList.toggle('active', t===tab);
   });
   document.getElementById('log-input-row').style.display =
-    (tab==='log' && state.selectedIncident) ? 'flex' : 'none';
+    ((tab==='log' || tab==='general') && state.selectedIncident) ? 'flex' : 'none';
   if (tab==='history') loadHistory();
   if (tab==='stats') initStats();
 }
