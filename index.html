@@ -2139,7 +2139,7 @@ function renderUnits() {
   const units = campusId ? state.units.filter(u => u.campus_id === campusId) : state.units;
   const hasRoster = campusId ? getRosterForCampusDay(campusId).length > 0 : false;
 
-  document.getElementById('btn-load-roster').style.display  = (campusId && hasRoster && !units.length) ? 'inline-block' : 'none';
+  document.getElementById('btn-load-roster').style.display  = (campusId && hasRoster) ? 'inline-block' : 'none';
   document.getElementById('btn-clear-service').style.display = (campusId && units.length) ? 'inline-block' : 'none';
 
   if (!units.length) {
