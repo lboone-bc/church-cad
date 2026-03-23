@@ -642,6 +642,57 @@
     .detail-tab.active { background: var(--cad-panel); color: #fff; border-bottom-color: var(--cad-accent); }
     .tab-pane { display: none; flex: 1; overflow-y: auto; padding: 8px; }
     .tab-pane.active { display: block; }
+    #pane-general.active {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 0;
+    }
+    #general-static-fields {
+      flex: 0 0 auto;
+      padding: 8px 8px 2px;
+    }
+    #general-live-tools {
+      margin-bottom: 8px;
+      background: #151b22;
+      border: 1px solid var(--cad-border);
+      border-radius: 3px;
+      padding: 6px;
+    }
+    #general-assigned-units {
+      margin-top: 4px;
+      font-size: 10px;
+      color: var(--cad-muted);
+      line-height: 1.4;
+    }
+    #general-assigned-units .unit-chip {
+      display: inline-block;
+      margin: 2px 4px 0 0;
+      padding: 1px 6px;
+      border: 1px solid var(--cad-border);
+      border-radius: 999px;
+      color: var(--cad-text);
+      background: #1a2030;
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+    }
+    #general-narrative-wrap {
+      flex: 1;
+      min-height: 0;
+      padding: 0 8px 8px;
+      display: flex;
+      flex-direction: column;
+    }
+    #general-narrative-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    #general-narrative-scroll::-webkit-scrollbar { width: 4px; }
+    #general-narrative-scroll::-webkit-scrollbar-track { background: var(--cad-panel); }
+    #general-narrative-scroll::-webkit-scrollbar-thumb { background: var(--cad-border); }
+    #log-list-general, #log-list-log { list-style: none; padding: 0; margin: 0; }
     .tab-pane::-webkit-scrollbar { width: 4px; }
     .tab-pane::-webkit-scrollbar-track { background: var(--cad-panel); }
     .tab-pane::-webkit-scrollbar-thumb { background: var(--cad-border); }
@@ -678,6 +729,27 @@
     .log-entry .log-time { font-size: 10px; color: var(--cad-accent); font-weight: 700; font-family: 'Courier New', monospace; }
     .log-entry .log-text { color: var(--cad-text); }
     .log-entry .log-by { font-size: 10px; color: var(--cad-muted); }
+    .unit-quick-assign {
+      width: 100%;
+      margin-top: 3px;
+      background: #1a3a5a;
+      border: 1px solid #2b5f8f;
+      color: #d7ebff;
+      font-family: inherit;
+      font-size: 10px;
+      letter-spacing: 0.3px;
+      border-radius: 2px;
+      padding: 3px 6px;
+      text-align: left;
+      cursor: pointer;
+    }
+    .unit-quick-assign:hover { border-color: var(--cad-accent); color: #fff; }
+    .unit-quick-assign:disabled {
+      background: #18212b;
+      border-color: var(--cad-border);
+      color: var(--cad-muted);
+      cursor: default;
+    }
     #log-input-row {
       display: flex; gap: 6px; padding: 6px 8px;
       border-top: 1px solid var(--cad-border);
@@ -2153,6 +2225,10 @@ function renderUnits() {
   el.innerHTML = sorted.map(u => {
     const assignedInc = u.incident_id ? state.incidents.find(i => i.id === u.incident_id) : null;
     const assignLabel = assignedInc ? escHtml(assignedInc.incident_number) : '';
+    const selectedActive = state.selectedIncident && state.selectedIncident.status === 'active' && state.selectedIncident.campus_id === u.campus_id
+      ? state.selectedIncident
+      : null;
+    const quickAssignDisabled = !selectedActive || u.status === 'unavailable' || u.incident_id === selectedActive.id;
     return `
     <div class="unit-card status-${u.status}" id="unit-card-${u.id}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
@@ -2173,6 +2249,9 @@ function renderUnits() {
         ${state.incidents.filter(i=>i.campus_id===u.campus_id&&i.status==='active').map(i=>`<option value="${i.id}" ${u.incident_id===i.id?'selected':''}>${escHtml(i.incident_number)} ${escHtml(i.call_type)}</option>`).join('')}
         ${u.incident_id ? '<option value="clear">Clear Assignment</option>' : ''}
       </select>
+      <button class="unit-quick-assign" ${quickAssignDisabled ? 'disabled' : ''} onclick="assignUnitToIncident(${u.id}, ${selectedActive ? selectedActive.id : 'null'})">
+        ${selectedActive ? (u.incident_id === selectedActive.id ? `Assigned to ${escHtml(selectedActive.incident_number)}` : `Assign to ${escHtml(selectedActive.incident_number)}`) : 'Select an incident to quick-assign'}
+      </button>
     </div>`;
   }).join('');
 
@@ -2227,7 +2306,16 @@ async function assignUnitToIncident(unitId, incidentId) {
     }
   }
 
+  if (state.selectedIncident) renderDetailPanel();
   renderUnits();
+}
+
+async function assignSelectedUnitFromDetail() {
+  if (!state.selectedIncident) return;
+  const select = document.getElementById('detail-unit-assign');
+  if (!select || !select.value) return;
+  await assignUnitToIncident(parseInt(select.value), state.selectedIncident.id);
+  select.value = '';
 }
 
 async function removeUnit(unitId) {
@@ -2306,34 +2394,59 @@ function renderDetailPanel() {
 
   const ct = state.callTypes.find(c => c.code === inc.call_type);
   const ctLabel = ct ? `${ct.code} — ${ct.description}` : inc.call_type;
+  const campusUnits = state.units
+    .filter(u => u.campus_id === inc.campus_id && u.status !== 'unavailable')
+    .sort((a,b) => a.unit_label.localeCompare(b.unit_label));
+  const assignableUnits = campusUnits.filter(u => !u.incident_id || u.incident_id === inc.id);
+  const assignedUnits = campusUnits.filter(u => u.incident_id === inc.id);
 
   body.innerHTML = `
-    <div class="detail-field">
-      <div class="detail-label">Status</div>
-      <div class="detail-value" style="color:var(--cad-p${inc.priority}); font-weight:700;">
-        PRIORITY ${inc.priority} — ACTIVE
+    <div id="general-static-fields">
+      <div class="detail-field">
+        <div class="detail-label">Status</div>
+        <div class="detail-value" style="color:var(--cad-p${inc.priority}); font-weight:700;">
+          PRIORITY ${inc.priority} — ACTIVE
+        </div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Call Type</div>
+        <div class="detail-value">${escHtml(ctLabel)}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Location</div>
+        <div class="detail-value">${escHtml(inc.location_description || '—')}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Map Position</div>
+        <div class="detail-value">${inc.pin_x !== null && inc.pin_y !== null ? `${inc.pin_x}%, ${inc.pin_y}%` : 'No map pin assigned'}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Opened</div>
+        <div class="detail-value">${new Date(inc.created_at).toLocaleString()}</div>
+      </div>
+      ${inc.caller_name ? `<div class="detail-field"><div class="detail-label">Caller</div><div class="detail-value">${escHtml(inc.caller_name)}${inc.caller_contact ? ' · ' + escHtml(inc.caller_contact) : ''}</div></div>` : ''}
+
+      <div id="general-live-tools">
+        <div class="detail-label">Assign Unit</div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <select id="detail-unit-assign" class="unit-status-select" style="margin-top:0; flex:1;">
+            <option value="">— Select Unit —</option>
+            ${assignableUnits.map(u => `<option value="${u.id}">${escHtml(u.unit_label)}${u.incident_id === inc.id ? ' (already on this call)' : ''}</option>`).join('')}
+          </select>
+          <button class="cad-btn-primary" style="padding:3px 10px; font-size:10px;" onclick="assignSelectedUnitFromDetail()">Assign</button>
+        </div>
+        <div id="general-assigned-units">
+          ${assignedUnits.length ? assignedUnits.map(u => `<span class="unit-chip">${escHtml(u.unit_label)}</span>`).join('') : 'No units assigned yet.'}
+        </div>
       </div>
     </div>
-    <div class="detail-field">
-      <div class="detail-label">Call Type</div>
-      <div class="detail-value">${escHtml(ctLabel)}</div>
-    </div>
-    <div class="detail-field">
-      <div class="detail-label">Location</div>
-      <div class="detail-value">${escHtml(inc.location_description || '—')}</div>
-    </div>
-    <div class="detail-field">
-      <div class="detail-label">Map Position</div>
-      <div class="detail-value">${inc.pin_x !== null && inc.pin_y !== null ? `${inc.pin_x}%, ${inc.pin_y}%` : 'No map pin assigned'}</div>
-    </div>
-    <div class="detail-field">
-      <div class="detail-label">Opened</div>
-      <div class="detail-value">${new Date(inc.created_at).toLocaleString()}</div>
-    </div>
-    ${inc.caller_name ? `<div class="detail-field"><div class="detail-label">Caller</div><div class="detail-value">${escHtml(inc.caller_name)}${inc.caller_contact ? ' · ' + escHtml(inc.caller_contact) : ''}</div></div>` : ''}
 
-    <div class="divider-label">Narrative Log</div>
-    <ul id="log-list-general"></ul>
+    <div id="general-narrative-wrap">
+      <div class="divider-label">Narrative Log</div>
+      <div id="general-narrative-scroll" class="narrative-scroll">
+        <ul id="log-list-general"></ul>
+      </div>
+    </div>
   `;
 
   renderDetailLog();
@@ -2356,7 +2469,8 @@ function renderDetailLog() {
     const el = document.getElementById(id);
     if (!el) return;
     el.innerHTML = html;
-    el.scrollIntoView && el.parentElement && (el.parentElement.scrollTop = el.parentElement.scrollHeight);
+    const scroller = el.closest('.narrative-scroll') || el.parentElement;
+    if (scroller) scroller.scrollTop = scroller.scrollHeight;
   });
 }
 
@@ -2632,8 +2746,12 @@ async function onMapClick(event) {
   if (!gateAction('mapPin')) return;
   const img = document.getElementById('map-img');
   const rect = img.getBoundingClientRect();
-  const x = ((event.clientX - rect.left) / rect.width * 100).toFixed(1);
-  const y = ((event.clientY - rect.top) / rect.height * 100).toFixed(1);
+  if (!rect.width || !rect.height) return;
+
+  const rawX = ((event.clientX - rect.left) / rect.width) * 100;
+  const rawY = ((event.clientY - rect.top) / rect.height) * 100;
+  const x = Math.max(0, Math.min(100, rawX)).toFixed(1);
+  const y = Math.max(0, Math.min(100, rawY)).toFixed(1);
 
   state.selectedIncident.pin_x = parseFloat(x);
   state.selectedIncident.pin_y = parseFloat(y);
@@ -2650,15 +2768,25 @@ async function onMapClick(event) {
 
 function renderPins() {
   const overlay = document.getElementById('map-overlay');
+  const mapContainer = document.getElementById('map-container');
+  const img = document.getElementById('map-img');
   overlay.innerHTML = '';
   const campusId = state.selectedCampus ? state.selectedCampus.id : null;
   if (!campusId) return;
 
+  const containerRect = mapContainer.getBoundingClientRect();
+  const imgRect = img.getBoundingClientRect();
+  const hasImageRect = !!(imgRect.width && imgRect.height);
+  const offsetLeft = hasImageRect ? (imgRect.left - containerRect.left) : 0;
+  const offsetTop = hasImageRect ? (imgRect.top - containerRect.top) : 0;
+  const drawWidth = hasImageRect ? imgRect.width : containerRect.width;
+  const drawHeight = hasImageRect ? imgRect.height : containerRect.height;
+
   state.incidents.filter(i => i.campus_id === campusId && i.status === 'active' && i.pin_x !== null).forEach(inc => {
     const pin = document.createElement('div');
     pin.className = `map-pin p${inc.priority}`;
-    pin.style.left = inc.pin_x + '%';
-    pin.style.top = inc.pin_y + '%';
+    pin.style.left = (offsetLeft + ((inc.pin_x / 100) * drawWidth)) + 'px';
+    pin.style.top = (offsetTop + ((inc.pin_y / 100) * drawHeight)) + 'px';
     pin.title = `${inc.incident_number}: ${inc.call_type} — ${inc.location_description}`;
     pin.onclick = () => selectIncident(inc.id);
     overlay.appendChild(pin);
@@ -3246,6 +3374,8 @@ document.addEventListener('keydown', e => {
   if (e.key === 'n' || e.key === 'N') openNewIncident();
   if (e.key === 'Escape') { state.selectedIncident = null; clearDetailPanel(); renderQueue(); }
 });
+
+window.addEventListener('resize', () => renderPins());
 
 /* ══════════════════════════════════
    BOOT
