@@ -1473,13 +1473,64 @@ async function saveRuntimeConfig() {
   if (state.session) await boot();
 }
 
+function forceShowSetupModal() {
+  const modal = document.getElementById('setupConfigModal');
+  if (!modal) return;
+  modal.style.display = 'block';
+  modal.classList.add('show');
+  modal.removeAttribute('aria-hidden');
+  modal.setAttribute('aria-modal', 'true');
+  document.body.classList.add('modal-open');
+  let backdrop = document.getElementById('setup-modal-backdrop');
+  if (!backdrop) {
+    backdrop = document.createElement('div');
+    backdrop.id = 'setup-modal-backdrop';
+    backdrop.className = 'modal-backdrop fade show';
+    backdrop.onclick = closeSetupConfig;
+    document.body.appendChild(backdrop);
+  }
+}
+
+function closeSetupConfig() {
+  const modal = document.getElementById('setupConfigModal');
+  if (window.bootstrap && bootstrap.Modal && modal) {
+    const inst = bootstrap.Modal.getInstance(modal);
+    if (inst) inst.hide();
+  }
+  if (modal) {
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+    modal.removeAttribute('aria-modal');
+  }
+  const backdrop = document.getElementById('setup-modal-backdrop');
+  if (backdrop) backdrop.remove();
+  document.body.classList.remove('modal-open');
+}
+
 function openSetupConfig() {
-  document.getElementById('setup-supabase-url').value = runtimeConfig.supabaseUrl || '';
-  document.getElementById('setup-supabase-anon').value = runtimeConfig.supabaseAnon || '';
-  document.getElementById('setup-admin-username').value = runtimeConfig.adminUsername || '';
-  document.getElementById('setup-admin-password').value = runtimeConfig.adminPassword || '';
-  document.getElementById('setup-config-status').textContent = '';
-  bootstrap.Modal.getOrCreateInstance(document.getElementById('setupConfigModal')).show();
+  const modal = document.getElementById('setupConfigModal');
+  if (!modal) return;
+  const supUrlEl = document.getElementById('setup-supabase-url');
+  const supAnonEl = document.getElementById('setup-supabase-anon');
+  const adminUserEl = document.getElementById('setup-admin-username');
+  const adminPwEl = document.getElementById('setup-admin-password');
+  const statusEl = document.getElementById('setup-config-status');
+  if (supUrlEl) supUrlEl.value = runtimeConfig.supabaseUrl || '';
+  if (supAnonEl) supAnonEl.value = runtimeConfig.supabaseAnon || '';
+  if (adminUserEl) adminUserEl.value = runtimeConfig.adminUsername || '';
+  if (adminPwEl) adminPwEl.value = runtimeConfig.adminPassword || '';
+  if (statusEl) statusEl.textContent = '';
+  try {
+    if (window.bootstrap && bootstrap.Modal) {
+      bootstrap.Modal.getOrCreateInstance(modal).show();
+    } else {
+      forceShowSetupModal();
+    }
+  } catch (e) {
+    console.error('Setup modal fallback triggered:', e);
+    forceShowSetupModal();
+  }
 }
 
 function clearRuntimeConfig() {
@@ -1674,8 +1725,18 @@ function switchLoginTab(tab) {
   if (tab === 'admin') {
     const u = document.getElementById('admin-username');
     const pw = document.getElementById('admin-password');
-    if (u) { u.readOnly = false; u.disabled = false; }
-    if (pw) { pw.readOnly = false; pw.disabled = false; }
+    if (u) {
+      u.readOnly = false;
+      u.disabled = false;
+      u.style.pointerEvents = 'auto';
+      u.style.userSelect = 'text';
+    }
+    if (pw) {
+      pw.readOnly = false;
+      pw.disabled = false;
+      pw.style.pointerEvents = 'auto';
+      pw.style.userSelect = 'text';
+    }
     setTimeout(() => u && u.focus(), 20);
     if (!hasAdminConfig()) {
       document.getElementById('admin-error').innerHTML = 'Admin not configured. <button type="button" class="cad-btn-secondary" style="padding:2px 8px;font-size:10px;margin-left:6px;" onclick="openSetupConfig()">Open Secure Setup</button>';
@@ -3260,7 +3321,7 @@ runtimeConfigReady.then(() => boot());
     <div class="modal-content cad-modal-content">
       <div class="cad-modal-header">
         <span class="cad-modal-title"><i class="bi bi-shield-lock me-2"></i>Secure Setup</span>
-        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close btn-close-white ms-auto" onclick="closeSetupConfig()"></button>
       </div>
       <div class="modal-body" style="padding:14px;">
         <div style="font-size:11px;color:var(--cad-muted);margin-bottom:12px;">Supabase URL, anon key, and admin credentials are stored encrypted in this browser only. For a static frontend, true secret hiding still depends on Supabase RLS and any future proxy/server work.</div>
@@ -3282,7 +3343,7 @@ runtimeConfigReady.then(() => boot());
       </div>
       <div class="modal-footer" style="background:var(--cad-header); border-top:1px solid var(--cad-border); padding:10px 14px; gap:8px;">
         <button class="cad-btn-danger" onclick="clearRuntimeConfig()"><i class="bi bi-trash me-1"></i>Clear Saved Setup</button>
-        <button class="cad-btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button class="cad-btn-secondary" onclick="closeSetupConfig()">Close</button>
         <button class="cad-btn-primary" onclick="saveRuntimeConfig()"><i class="bi bi-check-lg me-1"></i>Save Secure Setup</button>
       </div>
     </div>
