@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.jsdelivr.net https://*.supabase.co https://*.supabase.io; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https://*.supabase.co https://*.supabase.io; connect-src 'self' https://*.supabase.co https://*.supabase.io wss://*.supabase.co;">
+  <meta http-equiv="X-Frame-Options" content="DENY" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), camera=(), microphone=()" />
   <title>Biltmore Church CAD</title>
+  <link rel="dns-prefetch" href="//cdn.jsdelivr.net" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
 
   <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -225,6 +232,33 @@
       top: 0; left: 0; right: 0; bottom: 0;
       pointer-events: none;
     }
+    #map-hint {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .map-hint-pill {
+      background: rgba(10, 30, 48, 0.88);
+      border: 1px solid rgba(122, 184, 232, 0.35);
+      border-radius: 999px;
+      color: #d0e8ff;
+      font-size: 10px;
+      letter-spacing: 0.6px;
+      padding: 4px 10px;
+      text-transform: uppercase;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+    .map-hint-pill.active {
+      border-color: rgba(251, 191, 36, 0.7);
+      color: #fbbf24;
+    }
     .map-pin {
       position: absolute;
       width: 14px;
@@ -238,6 +272,7 @@
     .map-pin.p1 { background: var(--cad-p1); }
     .map-pin.p2 { background: var(--cad-p2); }
     .map-pin.p3 { background: var(--cad-p3); }
+    .map-pin.p4 { background: var(--cad-p4); }
 
     #map-upload-btn {
       position: absolute;
@@ -355,9 +390,9 @@
     #units-scroll {
       flex: 1;
       display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 10px;
+      align-items: stretch;
+      gap: 16px;
+      padding: 14px 18px 16px;
       overflow-x: auto;
       overflow-y: hidden;
     }
@@ -695,6 +730,29 @@
     .history-detail-row { display: none; background: #1a2030; }
     .history-detail-row.open { display: table-row; }
     .history-detail-row td { padding: 6px 10px; font-size: 11px; color: var(--cad-muted); border-bottom: 1px solid var(--cad-border); }
+    .audit-log-list {
+      margin-top: 8px;
+      display: grid;
+      gap: 6px;
+    }
+    .audit-log-item {
+      border-left: 2px solid var(--cad-accent2);
+      padding: 4px 8px;
+      background: rgba(15, 30, 48, 0.5);
+    }
+    .audit-log-item .stamp {
+      color: #fbbf24;
+      font-size: 10px;
+      font-family: 'Courier New', monospace;
+    }
+    .audit-log-item .body {
+      color: var(--cad-text);
+      font-size: 11px;
+    }
+    .audit-log-item .by {
+      color: var(--cad-muted);
+      font-size: 10px;
+    }
 
     /* ── MODAL / BUTTON UPDATES ── */
     .cad-modal-content {
@@ -745,9 +803,10 @@
 
     /* unit cards */
     .unit-card {
-      flex-shrink: 0; width: 128px; background: #1e2530;
+      flex-shrink: 0; width: 148px; background: #1e2530;
       border: 1px solid var(--cad-border); border-top: 2px solid var(--cad-border);
-      border-radius: 2px; padding: 5px 7px; margin: 4px 0;
+      border-radius: 4px; padding: 10px 12px; margin: 2px 6px;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.18);
     }
     .status-available   { border-top-color: var(--unit-avail) !important; }
     .status-assigned    { border-top-color: var(--unit-assigned) !important; }
@@ -863,6 +922,24 @@
       font-family: 'Courier New', monospace;
       font-style: italic;
     }
+    .setup-link {
+      margin-top: 14px;
+      background: transparent;
+      border: 1px solid var(--cad-border);
+      color: var(--cad-muted);
+      border-radius: 3px;
+      font-size: 11px;
+      padding: 7px 10px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .setup-link:hover { color: var(--cad-text); border-color: var(--cad-accent); }
+    .security-note {
+      margin-top: 10px;
+      color: var(--cad-muted);
+      font-size: 10px;
+      line-height: 1.45;
+    }
 
     /* ── CALL TYPE AUTOCOMPLETE ── */
     .ct-search-wrap { position: relative; margin-bottom: 8px; }
@@ -973,6 +1050,8 @@
       <button class="login-submit" onclick="submitAdminLogin()">SIGN IN</button>
       <div class="login-error" id="admin-error"></div>
     </div>
+    <button class="setup-link" onclick="openSetupConfig()"><i class="bi bi-shield-lock me-1"></i>Secure Setup</button>
+    <div class="security-note" id="setup-status-note">Runtime credentials are loaded from encrypted local browser storage, not from this repo.</div>
   </div>
 </div>
 
@@ -1037,6 +1116,10 @@
     </div>
     <div class="panel-body" style="padding:0; position:relative;">
       <div id="map-container">
+        <div id="map-hint">
+          <span class="map-hint-pill" id="map-pin-mode-pill">Pin placement off</span>
+          <span class="map-hint-pill">Recommended map: 2000-3000px wide, PNG/JPG, under 8 MB</span>
+        </div>
         <div id="map-placeholder">
           <i class="bi bi-map"></i>
           <span style="font-size:13px;">No map uploaded for this campus</span>
@@ -1059,6 +1142,8 @@
       <i class="bi bi-file-text"></i> Incident Detail
       <span id="detail-inc-number" style="color:#fff; font-weight:700; margin-left:6px; font-size:11px; font-family:'Courier New',monospace;"></span>
       <div id="detail-action-btns" style="margin-left:auto; display:none; gap:6px; align-items:center;">
+        <button class="cad-btn-secondary" style="padding:2px 8px; font-size:10px;" onclick="armMapPlacement()"><i class="bi bi-geo-alt me-1"></i>Map Pin</button>
+        <button class="cad-btn-secondary" style="padding:2px 8px; font-size:10px;" onclick="openLiveEdit()"><i class="bi bi-pencil me-1"></i>Edit</button>
         <button class="cad-btn-danger" style="padding:2px 8px; font-size:10px;" onclick="closeSelectedIncident()"><i class="bi bi-x-circle me-1"></i>Close</button>
       </div>
     </div>
@@ -1067,6 +1152,7 @@
       <div class="detail-tab active" id="tab-general" onclick="switchDetailTab('general')">General</div>
       <div class="detail-tab" id="tab-log" onclick="switchDetailTab('log')">Log</div>
       <div class="detail-tab" id="tab-history" onclick="switchDetailTab('history')">History</div>
+      <div class="detail-tab" id="tab-stats" onclick="switchDetailTab('stats')">Stats</div>
     </div>
     <!-- GENERAL TAB -->
     <div class="tab-pane active" id="pane-general">
@@ -1092,6 +1178,35 @@
           <i class="bi bi-clock-history" style="font-size:32px; color:var(--cad-border); display:block; margin-bottom:8px;"></i>
           <span style="color:var(--cad-muted); font-size:12px;">No history loaded</span>
         </div>
+      </div>
+    </div>
+    <!-- STATS TAB -->
+    <div class="tab-pane" id="pane-stats">
+      <div style="padding:8px 0;">
+        <div class="divider-label">Incident Statistics</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+          <div style="flex:1;min-width:100px;">
+            <label class="detail-label">From Date</label>
+            <input type="date" id="stats-from" class="hedit-input" style="font-size:11px;padding:3px 6px;" oninput="renderStats()"/>
+          </div>
+          <div style="flex:1;min-width:100px;">
+            <label class="detail-label">To Date</label>
+            <input type="date" id="stats-to" class="hedit-input" style="font-size:11px;padding:3px 6px;" oninput="renderStats()"/>
+          </div>
+          <div style="flex:1;min-width:100px;">
+            <label class="detail-label">Campus</label>
+            <select id="stats-campus" class="hedit-input" style="font-size:11px;padding:3px 6px;" onchange="renderStats()">
+              <option value="">All Campuses</option>
+            </select>
+          </div>
+          <div style="flex:1;min-width:120px;">
+            <label class="detail-label">Incident Type</label>
+            <select id="stats-type" class="hedit-input" style="font-size:11px;padding:3px 6px;" onchange="renderStats()">
+              <option value="">All Types</option>
+            </select>
+          </div>
+        </div>
+        <div id="stats-output"></div>
       </div>
     </div>
     <!-- LOG INPUT (shown on Log tab) -->
@@ -1154,6 +1269,11 @@
       <div class="settings-section-title"><i class="bi bi-clock-history me-1"></i> Current Session</div>
       <div style="font-size:12px;color:var(--cad-muted);">Role: <span style="color:#fbbf24;font-weight:700;">ADMIN</span><br>Logged in: <span id="admin-login-time" style="color:var(--cad-text);"></span></div>
     </div>
+    <div class="settings-section">
+      <div class="settings-section-title"><i class="bi bi-shield-lock me-1"></i> Secure Runtime Config</div>
+      <div style="font-size:11px;color:var(--cad-muted);margin-bottom:12px;">Credentials and API endpoints are saved in encrypted browser storage, not committed in this repository.</div>
+      <button class="cad-btn-secondary" style="width:100%;" onclick="openSetupConfig()"><i class="bi bi-gear-wide-connected me-1"></i>Open Secure Setup</button>
+    </div>
   </div>
 </div>
 
@@ -1173,25 +1293,71 @@
 <script>
 
 /* ════════════════════════════════════════════════
-   ⚙️  CONFIGURATION — EDIT BEFORE PUSHING
+   ⚙️  SECURE RUNTIME CONFIG
    ════════════════════════════════════════════════
-   ADMIN_USERNAME  → username typed at Admin login tab
-   ADMIN_PASSWORD  → password typed at Admin login tab
-   These are never stored in Supabase or sent anywhere.
-   SOC 4-digit passcode lives in Supabase (settings table).
-   Set it there once, then change it from the Admin Settings panel.
+   Admin credentials and Supabase connection values are intentionally
+   not stored in this repo. Use Secure Setup to save them in encrypted
+   browser storage for this device/browser.
    ════════════════════════════════════════════════ */
-const ADMIN_USERNAME = 'checkpoint';  // ← replace before pushing
-const ADMIN_PASSWORD = 'Biltmore123!';  // ← replace before pushing
-
-const SUPABASE_URL  = 'https://elgofpbkejgmtwndeumu.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsZ29mcGJrZWpnbXR3bmRldW11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxODIzMzksImV4cCI6MjA4OTc1ODMzOX0.0KUluuQ39Qu2UYJTIIf-7whodajONjNrFv9NuyQcUuE';
+const CONFIG_STORAGE_KEY = 'bc_cad_secure_config_v1';
+const SETUP_KEY_SEED = 'bc-cad-secure-config::v1';
+const ACTION_RATE_LIMITS = {
+  loginSoc: 1200,
+  loginAdmin: 1500,
+  newIncident: 3000,
+  logEntry: 1200,
+  liveEdit: 2000,
+  historyEdit: 2500,
+  mapUpload: 8000,
+  mapPin: 800,
+  addUnit: 1500,
+  closeIncident: 2000,
+  rosterLoad: 1500,
+  rosterAdd: 1500,
+  rosterDelete: 1500,
+  clearService: 5000
+};
+const actionGate = {};
+const MAP_UPLOAD_MAX_MB = 8;
+const DEFAULT_RUNTIME_CONFIG = {
+  supabaseUrl: '',
+  supabaseAnon: '',
+  adminUsername: '',
+  adminPassword: ''
+};
+let runtimeConfig = { ...DEFAULT_RUNTIME_CONFIG };
 
 /* ══════════════════════════════════
    INIT
 ══════════════════════════════════ */
 const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+let db = null;
+function initDbClient() {
+  if (!runtimeConfig.supabaseUrl || !runtimeConfig.supabaseAnon) {
+    db = null;
+    return null;
+  }
+  db = createClient(runtimeConfig.supabaseUrl, runtimeConfig.supabaseAnon, {
+    global: {
+      headers: {
+        'x-application-name': 'bc-cad',
+        'x-client-version': '2.1',
+        'x-webhook-source': 'bc-cad-ui',
+        'x-dns-policy': 'strict-runtime-config'
+      }
+    }
+  });
+  return db;
+}
+function getDb() {
+  return db;
+}
+function hasRuntimeConfig() {
+  return !!(runtimeConfig.supabaseUrl && runtimeConfig.supabaseAnon);
+}
+function hasAdminConfig() {
+  return !!(runtimeConfig.adminUsername && runtimeConfig.adminPassword);
+}
 
 let state = {
   campuses:         [],
@@ -1203,8 +1369,185 @@ let state = {
   selectedCampus:   null,
   selectedIncident: null,
   mapImageUrl:      null,
-  session:          null
+  session:          null,
+  mapPlacementMode: false
 };
+
+function setSetupStatus(msg, tone = 'muted') {
+  const el = document.getElementById('setup-status-note');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = tone === 'danger' ? 'var(--cad-p1)' : tone === 'success' ? '#4ade80' : 'var(--cad-muted)';
+}
+
+async function deriveSetupKey() {
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(`${location.origin}|${navigator.userAgent}|${SETUP_KEY_SEED}`),
+    'PBKDF2',
+    false,
+    ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: new TextEncoder().encode(location.hostname || 'localhost'),
+      iterations: 100000,
+      hash: 'SHA-256'
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptConfig(config) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveSetupKey();
+  const payload = new TextEncoder().encode(JSON.stringify(config));
+  const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, payload);
+  return JSON.stringify({
+    iv: Array.from(iv),
+    data: Array.from(new Uint8Array(cipher))
+  });
+}
+
+async function decryptConfig(blob) {
+  const parsed = JSON.parse(blob);
+  const key = await deriveSetupKey();
+  const plain = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv: new Uint8Array(parsed.iv) },
+    key,
+    new Uint8Array(parsed.data)
+  );
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+
+async function loadRuntimeConfig() {
+  runtimeConfig = { ...DEFAULT_RUNTIME_CONFIG };
+  const saved = localStorage.getItem(CONFIG_STORAGE_KEY);
+  if (saved) {
+    try {
+      runtimeConfig = { ...DEFAULT_RUNTIME_CONFIG, ...(await decryptConfig(saved)) };
+      setSetupStatus(hasRuntimeConfig() ? 'Secure runtime config loaded for this browser.' : 'Secure setup is saved, but connection details are incomplete.', hasRuntimeConfig() ? 'success' : 'muted');
+    } catch (err) {
+      console.error('Config decrypt error:', err);
+      setSetupStatus('Secure setup could not be read. Re-enter it from Secure Setup.', 'danger');
+    }
+  } else {
+    setSetupStatus('No runtime credentials are stored in this browser yet. Open Secure Setup to configure this device.');
+  }
+  initDbClient();
+}
+
+async function saveRuntimeConfig() {
+  const nextConfig = {
+    supabaseUrl: document.getElementById('setup-supabase-url').value.trim(),
+    supabaseAnon: document.getElementById('setup-supabase-anon').value.trim(),
+    adminUsername: document.getElementById('setup-admin-username').value.trim(),
+    adminPassword: document.getElementById('setup-admin-password').value
+  };
+  const statusEl = document.getElementById('setup-config-status');
+  if (!nextConfig.adminUsername || !nextConfig.adminPassword) {
+    statusEl.textContent = 'Admin username and password are required.';
+    statusEl.style.color = 'var(--cad-p1)';
+    return;
+  }
+  if ((nextConfig.supabaseUrl && !nextConfig.supabaseAnon) || (!nextConfig.supabaseUrl && nextConfig.supabaseAnon)) {
+    statusEl.textContent = 'Enter both Supabase URL and anon key, or leave both blank for demo mode.';
+    statusEl.style.color = 'var(--cad-p1)';
+    return;
+  }
+  localStorage.setItem(CONFIG_STORAGE_KEY, await encryptConfig(nextConfig));
+  runtimeConfig = nextConfig;
+  initDbClient();
+  statusEl.textContent = 'Secure setup saved for this browser.';
+  statusEl.style.color = '#4ade80';
+  setSetupStatus(hasRuntimeConfig() ? 'Secure runtime config loaded for this browser.' : 'Secure setup saved. App will run in demo mode until Supabase details are added.', hasRuntimeConfig() ? 'success' : 'muted');
+  if (state.session) await boot();
+}
+
+function openSetupConfig() {
+  document.getElementById('setup-supabase-url').value = runtimeConfig.supabaseUrl || '';
+  document.getElementById('setup-supabase-anon').value = runtimeConfig.supabaseAnon || '';
+  document.getElementById('setup-admin-username').value = runtimeConfig.adminUsername || '';
+  document.getElementById('setup-admin-password').value = runtimeConfig.adminPassword || '';
+  document.getElementById('setup-config-status').textContent = '';
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('setupConfigModal')).show();
+}
+
+function clearRuntimeConfig() {
+  localStorage.removeItem(CONFIG_STORAGE_KEY);
+  runtimeConfig = { ...DEFAULT_RUNTIME_CONFIG };
+  db = null;
+  document.getElementById('setup-config-status').textContent = 'Secure setup cleared from this browser.';
+  document.getElementById('setup-config-status').style.color = '#fbbf24';
+  setSetupStatus('Secure setup was cleared from this browser. Open Secure Setup to configure again.');
+}
+
+function gateAction(key, wait = ACTION_RATE_LIMITS[key] || 1000) {
+  const now = Date.now();
+  if (actionGate[key] && now - actionGate[key] < wait) {
+    const remain = ((wait - (now - actionGate[key])) / 1000).toFixed(1);
+    showAlert(`Please wait ${remain}s before repeating that action.`, 'warning');
+    return false;
+  }
+  actionGate[key] = now;
+  return true;
+}
+
+function setMapPlacementMode(enabled) {
+  state.mapPlacementMode = !!enabled;
+  const pill = document.getElementById('map-pin-mode-pill');
+  if (!pill) return;
+  pill.classList.toggle('active', state.mapPlacementMode);
+  pill.textContent = state.mapPlacementMode ? 'Pin placement armed' : 'Pin placement off';
+}
+
+function armMapPlacement() {
+  if (!state.selectedIncident) return;
+  const mapImg = document.getElementById('map-img');
+  if (!mapImg || mapImg.style.display === 'none') {
+    showAlert('Upload a campus map before placing a location pin.', 'warning');
+    return;
+  }
+  setMapPlacementMode(true);
+  showAlert(`Click the map to place ${state.selectedIncident.incident_number}.`, 'info');
+}
+
+function normalizeIncidentNumber(incidentNumber) {
+  const match = String(incidentNumber || '').match(/INC-(\d+)/i);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
+async function getNextIncidentNumber() {
+  let maxNum = state.incidents.reduce((max, inc) => Math.max(max, normalizeIncidentNumber(inc.incident_number)), 0);
+  if (getDb()) {
+    const { data, error } = await getDb().from('incidents').select('incident_number').order('created_at', { ascending: false }).limit(500);
+    if (!error && Array.isArray(data)) {
+      maxNum = data.reduce((max, inc) => Math.max(max, normalizeIncidentNumber(inc.incident_number)), maxNum);
+    }
+  }
+  return 'INC-' + String(maxNum + 1).padStart(4, '0');
+}
+
+function upsertLocalLog(entry) {
+  if (!state.incidentLogs[entry.incident_id]) state.incidentLogs[entry.incident_id] = [];
+  state.incidentLogs[entry.incident_id].push({ ...entry, id: entry.id || Date.now() });
+}
+
+function renderAuditTrail(logs) {
+  if (!logs || !logs.length) {
+    return '<div style="color:var(--cad-muted);font-size:11px;">No immutable history entries yet.</div>';
+  }
+  return `<div class="audit-log-list">${logs.map(log => `
+    <div class="audit-log-item">
+      <div class="stamp">${new Date(log.entered_at).toLocaleString()}</div>
+      <div class="body">${escHtml(log.entry_text || '')}</div>
+      <div class="by">${escHtml(log.entered_by || 'System')}</div>
+    </div>`).join('')}</div>`;
+}
 
 /* ══════════════════════════════════
    CLOCK
@@ -1216,6 +1559,8 @@ function tickClock() {
 }
 setInterval(tickClock, 1000);
 tickClock();
+
+const runtimeConfigReady = loadRuntimeConfig();
 
 const CALL_TYPES_LIST = [
   {code:'10-13',desc:'Weather Conditions',pri:4,cat:'info'},
@@ -1295,6 +1640,23 @@ const CALL_TYPES_LIST = [
    LOGIN
 ════════════════════════════════════════════════ */
 let pinEntry = '';
+let loginAttempts = { soc: 0, admin: 0 };
+let loginLockout  = { soc: 0, admin: 0 };
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_LOCKOUT_MS   = 30000; // 30 seconds
+
+function isLockedOut(type) {
+  if (!loginLockout[type]) return false;
+  if (Date.now() - loginLockout[type] < LOGIN_LOCKOUT_MS) return true;
+  loginLockout[type] = 0; loginAttempts[type] = 0; return false;
+}
+function recordFailedAttempt(type, errEl) {
+  loginAttempts[type]++;
+  if (loginAttempts[type] >= LOGIN_MAX_ATTEMPTS) {
+    loginLockout[type] = Date.now();
+    if (errEl) errEl.textContent = 'Too many attempts. Wait 30 seconds.';
+  }
+}
 
 function switchLoginTab(tab) {
   document.getElementById('tab-soc').classList.toggle('active', tab==='soc');
@@ -1311,17 +1673,27 @@ function updatePinDisplay() {
   for(let i=0;i<4;i++){const dot=document.getElementById('dot-'+i);dot.classList.toggle('filled',i<pinEntry.length);dot.classList.remove('error');}
 }
 async function checkPin() {
-  const {data,error}=await db.from('settings').select('value').eq('key','soc_passcode').single();
+  await runtimeConfigReady;
+  const errEl = document.getElementById('pin-error');
+  if (!gateAction('loginSoc')) return;
+  if (!getDb()) { showPinError('System is not configured. Open Secure Setup.'); return; }
+  if (isLockedOut('soc')) { showPinError('Too many attempts. Wait 30 seconds.'); pinEntry=''; updatePinDisplay(); return; }
+  const {data,error}=await getDb().from('settings').select('value').eq('key','soc_passcode').single();
   if(error||!data){showPinError('Cannot verify. Check DB.');return;}
-  if(pinEntry===data.value){startSession('soc');}
-  else{for(let i=0;i<4;i++)document.getElementById('dot-'+i).classList.add('error');setTimeout(()=>{pinEntry='';updatePinDisplay();document.getElementById('pin-error').textContent='Incorrect passcode.';},500);}
+  if(pinEntry===data.value){loginAttempts.soc=0;loginLockout.soc=0;startSession('soc');}
+  else{for(let i=0;i<4;i++)document.getElementById('dot-'+i).classList.add('error');recordFailedAttempt('soc',errEl);setTimeout(()=>{pinEntry='';updatePinDisplay();if(!errEl.textContent)errEl.textContent='Incorrect passcode.';},500);}
 }
 function showPinError(msg){document.getElementById('pin-error').textContent=msg;pinEntry='';setTimeout(updatePinDisplay,500);}
-function submitAdminLogin() {
+async function submitAdminLogin() {
+  await runtimeConfigReady;
+  const errEl=document.getElementById('admin-error');
+  if (!gateAction('loginAdmin')) return;
+  if (!hasAdminConfig()) { errEl.textContent='Admin credentials are not configured. Open Secure Setup.'; return; }
+  if (isLockedOut('admin')) { errEl.textContent='Too many attempts. Wait 30 seconds.'; return; }
   const u=document.getElementById('admin-username').value.trim();
   const p=document.getElementById('admin-password').value;
-  if(u===ADMIN_USERNAME&&p===ADMIN_PASSWORD){startSession('admin');}
-  else{document.getElementById('admin-error').textContent='Invalid credentials.';document.getElementById('admin-password').value='';}
+  if(u===runtimeConfig.adminUsername&&p===runtimeConfig.adminPassword){loginAttempts.admin=0;loginLockout.admin=0;startSession('admin');}
+  else{recordFailedAttempt('admin',errEl);if(!errEl.textContent)errEl.textContent='Invalid credentials.';document.getElementById('admin-password').value='';}
 }
 function startSession(role) {
   state.session={role,loginTime:new Date()};
@@ -1365,6 +1737,7 @@ function toggleAdminSettings(){document.getElementById('admin-settings-panel').c
 function pcAdvance(idx){const inputs=document.querySelectorAll('.passcode-digit');if(!/^\d$/.test(inputs[idx].value)){inputs[idx].value='';return;}if(idx<inputs.length-1)inputs[idx+1].focus();}
 function pcBack(e,idx){if(e.key==='Backspace'){const inputs=document.querySelectorAll('.passcode-digit');if(!inputs[idx].value&&idx>0){inputs[idx-1].value='';inputs[idx-1].focus();}}}
 async function saveNewPasscode(){
+  if (!getDb()) { document.getElementById('pc-error').textContent='Secure setup is incomplete.'; return; }
   const inputs=document.querySelectorAll('.passcode-digit');
   const newCode=[0,1,2,3].map(i=>inputs[i].value).join('');
   const confCode=[4,5,6,7].map(i=>inputs[i].value).join('');
@@ -1373,7 +1746,7 @@ async function saveNewPasscode(){
   if(newCode!==confCode){errEl.textContent='Passcodes do not match.';return;}
   if(!/^\d{4}$/.test(newCode)){errEl.textContent='Digits only.';return;}
   errEl.textContent='';
-  const {error}=await db.from('settings').upsert({key:'soc_passcode',value:newCode},{onConflict:'key'});
+  const {error}=await getDb().from('settings').upsert({key:'soc_passcode',value:newCode},{onConflict:'key'});
   if(error){errEl.textContent='Save failed: '+error.message;return;}
   inputs.forEach(i=>i.value='');
   showAlert('SOC passcode updated.','success');
@@ -1383,9 +1756,10 @@ async function saveNewPasscode(){
    CONNECTION TEST + BOOT
 ══════════════════════════════════ */
 async function boot() {
+  await loadRuntimeConfig();
   const badge = document.getElementById('conn-badge');
 
-  if (SUPABASE_URL === 'YOUR_SUPABASE_URL_HERE') {
+  if (!getDb()) {
     badge.className = 'badge bg-warning text-dark';
     badge.textContent = 'NOT CONFIGURED';
     loadDemoData();
@@ -1393,7 +1767,7 @@ async function boot() {
   }
 
   try {
-    const { error } = await db.from('campuses').select('id').limit(1);
+    const { error } = await getDb().from('campuses').select('id').limit(1);
     if (error) throw error;
     badge.className = 'badge bg-success';
     badge.textContent = 'CONNECTED';
@@ -1468,7 +1842,7 @@ function loadDemoData() {
    LOAD FROM SUPABASE
 ══════════════════════════════════ */
 async function loadCampuses() {
-  const { data, error } = await db.from('campuses').select('*').eq('is_active', true).order('name');
+  const { data, error } = await getDb().from('campuses').select('*').eq('is_active', true).order('name');
   if (!error) {
     state.campuses = data;
     renderCampusDropdowns();
@@ -1577,19 +1951,19 @@ async function loadCallTypes() {
   state.callTypes = CALL_TYPES_LIST.map((c,i) => ({id:i+1, ...c, description:c.desc, default_priority:c.pri, category:c.cat}));
 }
 async function loadRosterTemplates() {
-  const { data, error } = await db.from('roster_template_units').select('*').order('unit_label');
+  const { data, error } = await getDb().from('roster_template_units').select('*').order('unit_label');
   if (!error) state.rosterTemplates = data || [];
 }
 async function loadUnits(campusId) {
-  const { data, error } = await db.from('units').select('*').eq('campus_id', campusId).order('unit_label');
+  const { data, error } = await getDb().from('units').select('*').eq('campus_id', campusId).order('unit_label');
   if (!error) { state.units = data; renderUnits(); }
 }
 async function loadIncidents(campusId) {
-  const { data, error } = await db.from('incidents').select('*').eq('campus_id', campusId).eq('status','active').order('priority').order('created_at');
+  const { data, error } = await getDb().from('incidents').select('*').eq('campus_id', campusId).eq('status','active').order('priority').order('created_at');
   if (!error) { state.incidents = data; renderQueue(); renderPins(); updateStats(); }
 }
 async function loadLog(incidentId) {
-  const { data, error } = await db.from('incident_log').select('*').eq('incident_id', incidentId).order('entered_at');
+  const { data, error } = await getDb().from('incident_log').select('*').eq('incident_id', incidentId).order('entered_at');
   if (!error) { state.incidentLogs[incidentId] = data; renderDetailLog(); }
 }
 
@@ -1597,7 +1971,7 @@ async function loadLog(incidentId) {
    REALTIME SUBSCRIPTIONS
 ══════════════════════════════════ */
 function subscribeRealtime() {
-  db.channel('incidents-channel')
+  getDb().channel('incidents-channel')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'incidents' }, () => {
       if (state.selectedCampus) loadIncidents(state.selectedCampus.id);
     })
@@ -1633,7 +2007,7 @@ function onCampusChange() {
     hideMap();
   }
 
-  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+  if (!!getDb()) {
     loadUnits(state.selectedCampus.id);
     loadIncidents(state.selectedCampus.id);
   } else {
@@ -1717,7 +2091,7 @@ async function changeUnitStatus(unitId, newStatus) {
   const unit = state.units.find(u => u.id === unitId);
   if (!unit) return;
   unit.status = newStatus;
-  await db.from('units').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', unitId);
+  await getDb().from('units').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', unitId);
   const card = document.getElementById('unit-card-' + unitId);
   if (card) {
     card.className = 'unit-card status-' + newStatus;
@@ -1735,7 +2109,7 @@ async function assignUnitToIncident(unitId, incidentId) {
   const newStatus = clearing ? 'available' : 'assigned';
   unit.incident_id = newIncidentId;
   unit.status = newStatus;
-  await db.from('units').update({
+  await getDb().from('units').update({
     incident_id: newIncidentId,
     status: newStatus,
     updated_at: new Date().toISOString()
@@ -1743,7 +2117,7 @@ async function assignUnitToIncident(unitId, incidentId) {
   if (!clearing) {
     const inc = state.incidents.find(i => i.id === newIncidentId);
     if (inc) {
-      await db.from('incident_log').insert({
+      await getDb().from('incident_log').insert({
         incident_id: newIncidentId,
         entry_text: `Unit ${unit.unit_label} assigned.`,
         entered_by: 'SOC',
@@ -1756,7 +2130,7 @@ async function assignUnitToIncident(unitId, incidentId) {
 
 async function removeUnit(unitId) {
   state.units = state.units.filter(u => u.id !== unitId);
-  await db.from('units').delete().eq('id', unitId);
+  await getDb().from('units').delete().eq('id', unitId);
   renderUnits();
   updateStats();
 }
@@ -1801,10 +2175,11 @@ function renderQueue() {
 ══════════════════════════════════ */
 function selectIncident(id) {
   state.selectedIncident = state.incidents.find(i => i.id === id) || null;
+  setMapPlacementMode(false);
   renderQueue();
   renderDetailPanel();
   if (state.selectedIncident) {
-    if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+    if (!!getDb()) {
       loadLog(id);
     } else {
       renderDetailLog();
@@ -1846,6 +2221,10 @@ function renderDetailPanel() {
       <div class="detail-value">${escHtml(inc.location_description || '—')}</div>
     </div>
     <div class="detail-field">
+      <div class="detail-label">Map Position</div>
+      <div class="detail-value">${inc.pin_x !== null && inc.pin_y !== null ? `${inc.pin_x}%, ${inc.pin_y}%` : 'No map pin assigned'}</div>
+    </div>
+    <div class="detail-field">
       <div class="detail-label">Opened</div>
       <div class="detail-value">${new Date(inc.created_at).toLocaleString()}</div>
     </div>
@@ -1881,6 +2260,7 @@ function clearDetailPanel() {
   document.getElementById('detail-inc-number').textContent = '';
   document.getElementById('detail-action-btns').style.display = 'none';
   document.getElementById('log-input-row').style.display = 'none';
+  setMapPlacementMode(false);
   document.getElementById('pane-general').innerHTML = `
     <div class="detail-empty">
       <i class="bi bi-arrow-left-circle" style="font-size:32px; color:var(--cad-border); display:block; margin-bottom:8px;"></i>
@@ -1892,6 +2272,7 @@ function clearDetailPanel() {
    LOG ENTRY SUBMIT
 ══════════════════════════════════ */
 async function submitLogEntry() {
+  if (!gateAction('logEntry')) return;
   const input = document.getElementById('log-input');
   const text = input.value.trim();
   if (!text || !state.selectedIncident) return;
@@ -1903,12 +2284,10 @@ async function submitLogEntry() {
     entered_at: new Date().toISOString()
   };
 
-  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
-    await db.from('incident_log').insert(entry);
+  if (getDb()) {
+    await getDb().from('incident_log').insert(entry);
   } else {
-    if (!state.incidentLogs[entry.incident_id]) state.incidentLogs[entry.incident_id] = [];
-    entry.id = Date.now();
-    state.incidentLogs[entry.incident_id].push(entry);
+    upsertLocalLog(entry);
     renderDetailLog();
   }
 
@@ -1951,6 +2330,7 @@ function autoSetPriority() {
 }
 
 async function submitNewIncident() {
+  if (!gateAction('newIncident')) return;
   const campusId = parseInt(document.getElementById('inc-campus').value);
   const callType = document.getElementById('inc-calltype').value;
   const priority = parseInt(document.querySelector('input[name="inc-priority"]:checked')?.value || 3);
@@ -1965,7 +2345,7 @@ async function submitNewIncident() {
   }
 
   const now = new Date().toISOString();
-  const incNum = 'INC-' + String(state.incidents.length + 1).padStart(4, '0');
+  const incNum = await getNextIncidentNumber();
 
   const newInc = {
     campus_id: campusId,
@@ -1981,18 +2361,20 @@ async function submitNewIncident() {
     pin_y: null
   };
 
-  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
-    const { data, error } = await db.from('incidents').insert(newInc).select().single();
+  if (getDb()) {
+    const { data, error } = await getDb().from('incidents').insert(newInc).select().single();
     if (error) { showAlert('Error creating incident: ' + error.message, 'danger'); return; }
     newInc.id = data.id;
+    await getDb().from('incident_log').insert({ incident_id: data.id, entry_text: `Incident created at ${location}.`, entered_by: 'SOC', entered_at: now });
     if (note) {
-      await db.from('incident_log').insert({ incident_id: data.id, entry_text: note, entered_by: 'SOC', entered_at: now });
+      await getDb().from('incident_log').insert({ incident_id: data.id, entry_text: note, entered_by: 'SOC', entered_at: now });
     }
   } else {
     newInc.id = Date.now();
     state.incidents.push(newInc);
+    upsertLocalLog({ incident_id: newInc.id, entry_text: `Incident created at ${location}.`, entered_by: 'SOC', entered_at: now });
     if (note) {
-      state.incidentLogs[newInc.id] = [{ id: Date.now(), incident_id: newInc.id, entry_text: note, entered_by: 'SOC', entered_at: now }];
+      upsertLocalLog({ incident_id: newInc.id, entry_text: note, entered_by: 'SOC', entered_at: now });
     }
     renderQueue();
     renderPins();
@@ -2012,21 +2394,28 @@ async function submitNewIncident() {
    CLOSE INCIDENT
 ══════════════════════════════════ */
 async function closeSelectedIncident() {
+  if (!gateAction('closeIncident')) return;
   if (!state.selectedIncident) return;
   if (!confirm(`Close incident ${state.selectedIncident.incident_number}?`)) return;
 
   const incId = state.selectedIncident.id;
+  const now = new Date().toISOString();
   state.selectedIncident.status = 'closed';
 
-  await db.from('incidents').update({ status: 'closed' }).eq('id', incId);
-  await db.from('incident_log').insert({ incident_id: incId, entry_text: 'Incident closed.', entered_by: 'SOC', entered_at: new Date().toISOString() });
+  if (getDb()) {
+    await getDb().from('incidents').update({ status: 'closed' }).eq('id', incId);
+    await getDb().from('incident_log').insert({ incident_id: incId, entry_text: 'Incident closed.', entered_by: 'SOC', entered_at: now });
+  } else {
+    upsertLocalLog({ incident_id: incId, entry_text: 'Incident closed.', entered_by: 'SOC', entered_at: now });
+  }
 
-  // Clear unit assignments for this incident and set them back to available
   const assignedUnits = state.units.filter(u => u.incident_id === incId);
   for (const u of assignedUnits) {
     u.incident_id = null;
     u.status = 'available';
-    await db.from('units').update({ incident_id: null, status: 'available', updated_at: new Date().toISOString() }).eq('id', u.id);
+    if (getDb()) {
+      await getDb().from('units').update({ incident_id: null, status: 'available', updated_at: now }).eq('id', u.id);
+    }
   }
 
   state.incidents = state.incidents.filter(i => i.id !== incId);
@@ -2049,6 +2438,7 @@ function openAddUnit() {
 }
 
 async function submitAddUnit() {
+  if (!gateAction('addUnit')) return;
   const campusId = parseInt(document.getElementById('unit-campus-select').value);
   const label = document.getElementById('unit-label').value.trim();
   const type = document.getElementById('unit-type').value;
@@ -2057,8 +2447,8 @@ async function submitAddUnit() {
 
   const newUnit = { campus_id: campusId, unit_label: label, unit_type: type, status: 'available', updated_at: new Date().toISOString() };
 
-  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
-    const { data, error } = await db.from('units').insert(newUnit).select().single();
+  if (!!getDb()) {
+    const { data, error } = await getDb().from('units').insert(newUnit).select().single();
     if (error) { showAlert('Error adding unit: ' + error.message, 'danger'); return; }
     newUnit.id = data.id;
   } else {
@@ -2095,17 +2485,22 @@ function handleMapUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
   if (!state.selectedCampus) { showAlert('Select a campus before uploading a map.', 'warning'); return; }
+  if (!gateAction('mapUpload')) return;
+  if (file.size > MAP_UPLOAD_MAX_MB * 1024 * 1024) {
+    showAlert(`Map upload must be under ${MAP_UPLOAD_MAX_MB} MB.`, 'warning');
+    return;
+  }
   uploadMapToSupabase(file);
 }
 
 async function uploadMapToSupabase(file) {
   if (!state.selectedCampus) return;
   const path = `maps/campus-${state.selectedCampus.id}-${Date.now()}.${file.name.split('.').pop()}`;
-  const { data, error } = await db.storage.from('campus-maps').upload(path, file, { upsert: true });
+  const { data, error } = await getDb().storage.from('campus-maps').upload(path, file, { upsert: true });
   if (error) { showAlert('Map upload failed: ' + error.message, 'danger'); return; }
-  const { data: urlData } = db.storage.from('campus-maps').getPublicUrl(path);
+  const { data: urlData } = getDb().storage.from('campus-maps').getPublicUrl(path);
   const publicUrl = urlData.publicUrl;
-  await db.from('campuses').update({ map_image_url: publicUrl }).eq('id', state.selectedCampus.id);
+  await getDb().from('campuses').update({ map_image_url: publicUrl }).eq('id', state.selectedCampus.id);
   state.selectedCampus.map_image_url = publicUrl;
   showMap(publicUrl);
   showAlert('Map uploaded and saved.', 'success');
@@ -2113,6 +2508,11 @@ async function uploadMapToSupabase(file) {
 
 async function onMapClick(event) {
   if (!state.selectedIncident) return;
+  if (!state.mapPlacementMode) {
+    showAlert('Select an incident and press Map Pin before placing or moving a location.', 'info');
+    return;
+  }
+  if (!gateAction('mapPin')) return;
   const img = document.getElementById('map-img');
   const rect = img.getBoundingClientRect();
   const x = ((event.clientX - rect.left) / rect.width * 100).toFixed(1);
@@ -2121,10 +2521,12 @@ async function onMapClick(event) {
   state.selectedIncident.pin_x = parseFloat(x);
   state.selectedIncident.pin_y = parseFloat(y);
 
-  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
-    await db.from('incidents').update({ pin_x: x, pin_y: y }).eq('id', state.selectedIncident.id);
+  if (getDb()) {
+    await getDb().from('incidents').update({ pin_x: x, pin_y: y }).eq('id', state.selectedIncident.id);
   }
 
+  setMapPlacementMode(false);
+  renderDetailPanel();
   renderPins();
   showAlert(`Pin placed at ${x}%, ${y}%`, 'info');
 }
@@ -2153,13 +2555,16 @@ function renderPins() {
    DETAIL TABS
 ════════════════════════════════════════════════ */
 function switchDetailTab(tab) {
-  ['general','log','history'].forEach(t => {
-    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
-    document.getElementById('pane-'+t).classList.toggle('active', t===tab);
+  ['general','log','history','stats'].forEach(t => {
+    const tabEl = document.getElementById('tab-'+t);
+    const paneEl = document.getElementById('pane-'+t);
+    if (tabEl) tabEl.classList.toggle('active', t===tab);
+    if (paneEl) paneEl.classList.toggle('active', t===tab);
   });
   document.getElementById('log-input-row').style.display =
     (tab==='log' && state.selectedIncident) ? 'flex' : 'none';
   if (tab==='history') loadHistory();
+  if (tab==='stats') initStats();
 }
 
 /* ════════════════════════════════════════════════
@@ -2174,10 +2579,27 @@ async function loadHistory() {
   const cf = document.getElementById('hist-campus-filter');
   cf.innerHTML = '<option value="">All Campuses</option>';
   state.campuses.forEach(c => { cf.innerHTML += `<option value="${c.id}">${escHtml(c.name)}</option>`; });
-  const { data, error } = await db.from('incidents').select('*').order('created_at', { ascending: false }).limit(200);
+  if (!getDb()) {
+    historyData = [...state.incidents].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+    historyExpanded = {};
+    renderHistoryTable(historyData);
+    return;
+  }
+  const { data, error } = await getDb().from('incidents').select('*').order('created_at', { ascending: false }).limit(200);
   if (error) { wrap.innerHTML = `<div style="color:var(--cad-p1);font-size:11px;padding:8px;">Error: ${escHtml(error.message)}</div>`; return; }
   historyData = data || [];
   historyExpanded = {};
+  const ids = historyData.map(i => i.id);
+  if (ids.length) {
+    const { data: logs } = await getDb().from('incident_log').select('*').in('incident_id', ids).order('entered_at');
+    if (Array.isArray(logs)) {
+      ids.forEach(id => { state.incidentLogs[id] = []; });
+      logs.forEach(log => {
+        if (!state.incidentLogs[log.incident_id]) state.incidentLogs[log.incident_id] = [];
+        state.incidentLogs[log.incident_id].push(log);
+      });
+    }
+  }
   renderHistoryTable(historyData);
 }
 
@@ -2209,6 +2631,7 @@ function renderHistoryTable(rows) {
         const dt = new Date(inc.created_at);
         const dtStr = dt.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'})+' '+dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
         const editedTag = inc.last_edited_at ? `<span style="font-size:9px;color:#fbbf24;margin-left:4px;" title="Edited ${new Date(inc.last_edited_at).toLocaleString()}">✎</span>` : '';
+        const auditHtml = renderAuditTrail(state.incidentLogs[inc.id] || []);
         return `
           <tr onclick="toggleHistoryRow(${inc.id})" style="cursor:pointer;">
             <td class="h-num">${escHtml(inc.incident_number||'—')}${editedTag}</td>
@@ -2226,6 +2649,8 @@ function renderHistoryTable(rows) {
               ${inc.caller_name?`<strong>Caller:</strong> ${escHtml(inc.caller_name)}${inc.caller_contact?' · '+escHtml(inc.caller_contact):''}<br>`:''}
               <strong>Opened:</strong> ${new Date(inc.created_at).toLocaleString()}
               ${inc.last_edited_at?`<br><span class="edit-stamp">Last edited: ${new Date(inc.last_edited_at).toLocaleString()} by ${escHtml(inc.last_edited_by||'SOC')}</span>`:''}
+              <div class="divider-label" style="margin-top:10px;">Immutable Conversation / Change Log</div>
+              ${auditHtml}
             </td>
           </tr>`;
       }).join('')}</tbody>
@@ -2249,6 +2674,7 @@ function getRosterForCampusDay(campusId) {
 }
 
 async function loadRoster() {
+  if (!gateAction('rosterLoad')) return;
   if (!state.selectedCampus) return;
   const campusId = state.selectedCampus.id;
   const entries = getRosterForCampusDay(campusId);
@@ -2273,7 +2699,7 @@ async function loadRoster() {
     updated_at: now
   }));
 
-  const { error } = await db.from('units').insert(inserts);
+  const { error } = await getDb().from('units').insert(inserts);
   if (error) { showAlert('Error loading roster: ' + error.message, 'danger'); return; }
 
   await loadUnits(campusId);
@@ -2319,13 +2745,14 @@ function renderRosterList() {
 }
 
 async function addRosterEntry() {
+  if (!gateAction('rosterAdd')) return;
   const campusId = parseInt(document.getElementById('rm-campus').value);
   const name = document.getElementById('rm-name').value.trim();
   const type = document.getElementById('rm-type').value;
 
   if (!campusId || !name) { showAlert('Campus and name are required.', 'danger'); return; }
 
-  const { data, error } = await db.from('roster_template_units').insert({
+  const { data, error } = await getDb().from('roster_template_units').insert({
     campus_id: campusId, unit_label: name, unit_type: type, service_day: 'both'
   }).select().single();
 
@@ -2337,13 +2764,15 @@ async function addRosterEntry() {
 }
 
 async function deleteRosterEntry(id) {
+  if (!gateAction('rosterDelete')) return;
   if (!confirm('Remove this entry from the template?')) return;
-  await db.from('roster_template_units').delete().eq('id', id);
+  await getDb().from('roster_template_units').delete().eq('id', id);
   state.rosterTemplates = state.rosterTemplates.filter(r => r.id !== id);
   renderRosterList();
 }
 
 async function confirmClearService() {
+  if (!gateAction('clearService')) return;
   if (!state.selectedCampus) return;
   const campusId = state.selectedCampus.id;
   const unitCount = state.units.filter(u => u.campus_id === campusId).length;
@@ -2352,12 +2781,12 @@ async function confirmClearService() {
   const now = new Date().toISOString();
   const openIds = state.incidents.filter(i => i.campus_id === campusId && i.status === 'active').map(i => i.id);
   if (openIds.length) {
-    await db.from('incidents').update({ status: 'closed' }).in('id', openIds);
+    await getDb().from('incidents').update({ status: 'closed' }).in('id', openIds);
     for (const id of openIds) {
-      await db.from('incident_log').insert({ incident_id: id, entry_text: 'Incident closed — service ended.', entered_by: 'SOC', entered_at: now });
+      await getDb().from('incident_log').insert({ incident_id: id, entry_text: 'Incident closed — service ended.', entered_by: 'SOC', entered_at: now });
     }
   }
-  await db.from('units').delete().eq('campus_id', campusId);
+  await getDb().from('units').delete().eq('campus_id', campusId);
   state.units = state.units.filter(u => u.campus_id !== campusId);
   state.incidents = state.incidents.filter(i => i.campus_id !== campusId);
   state.selectedIncident = null;
@@ -2385,22 +2814,20 @@ function openHistEdit(incId) {
   const logs = state.incidentLogs[incId] || [];
   const editLogs = logs.filter(l => l.entry_text && l.entry_text.startsWith('[EDIT]'));
   const stampsEl = document.getElementById('hedit-stamps');
-  if (editLogs.length) {
-    stampsEl.innerHTML = '<div class="divider-label">Edit History</div>' +
-      editLogs.map(l => `<div class="edit-stamp">${new Date(l.entered_at).toLocaleString()} — ${escHtml(l.entry_text.replace('[EDIT] ',''))}</div>`).join('');
-  } else {
-    stampsEl.innerHTML = '';
-  }
+  const editHtml = editLogs.length
+    ? '<div class="divider-label">Edit History</div>' + editLogs.map(l => `<div class="edit-stamp">${new Date(l.entered_at).toLocaleString()} — ${escHtml(l.entry_text.replace('[EDIT] ',''))}</div>`).join('')
+    : '';
+  stampsEl.innerHTML = `${editHtml}<div class="divider-label">Immutable Conversation / Change Log</div>${renderAuditTrail(logs)}`;
   document.getElementById('hist-edit-overlay').classList.add('open');
   document.getElementById('hist-edit-panel').classList.add('open');
   // Load log if not already loaded
   if (!state.incidentLogs[incId]) loadLog(incId).then(() => {
     const logs2 = state.incidentLogs[incId] || [];
     const editLogs2 = logs2.filter(l => l.entry_text && l.entry_text.startsWith('[EDIT]'));
-    if (editLogs2.length) {
-      stampsEl.innerHTML = '<div class="divider-label">Edit History</div>' +
-        editLogs2.map(l => `<div class="edit-stamp">${new Date(l.entered_at).toLocaleString()} — ${escHtml(l.entry_text.replace('[EDIT] ',''))}</div>`).join('');
-    }
+    const editHtml2 = editLogs2.length
+      ? '<div class="divider-label">Edit History</div>' + editLogs2.map(l => `<div class="edit-stamp">${new Date(l.entered_at).toLocaleString()} — ${escHtml(l.entry_text.replace('[EDIT] ',''))}</div>`).join('')
+      : '';
+    stampsEl.innerHTML = `${editHtml2}<div class="divider-label">Immutable Conversation / Change Log</div>${renderAuditTrail(logs2)}`;
   });
 }
 
@@ -2411,6 +2838,7 @@ function closeHistEdit() {
 }
 
 async function saveHistEdit() {
+  if (!gateAction('historyEdit')) return;
   if (!histEditId) return;
   const note = document.getElementById('hedit-note').value.trim();
   if (!note) { showAlert('Edit note is required.', 'danger'); return; }
@@ -2419,7 +2847,7 @@ async function saveHistEdit() {
   const location = document.getElementById('hedit-location').value.trim();
   const status = document.getElementById('hedit-status').value;
   const now = new Date().toISOString();
-  const { error } = await db.from('incidents').update({
+  const { error } = await getDb().from('incidents').update({
     call_type: callType,
     priority,
     location_description: location,
@@ -2428,12 +2856,14 @@ async function saveHistEdit() {
     last_edited_by: state.session?.role === 'admin' ? 'ADMIN' : 'SOC'
   }).eq('id', histEditId);
   if (error) { showAlert('Save failed: ' + error.message, 'danger'); return; }
-  await db.from('incident_log').insert({
+  const editEntry = {
     incident_id: histEditId,
     entry_text: '[EDIT] ' + note,
     entered_by: state.session?.role === 'admin' ? 'ADMIN' : 'SOC',
     entered_at: now
-  });
+  };
+  await getDb().from('incident_log').insert(editEntry);
+  upsertLocalLog(editEntry);
   // Update local historyData
   const idx = historyData.findIndex(i => i.id === histEditId);
   if (idx > -1) {
@@ -2449,8 +2879,8 @@ async function deleteHistoryIncident() {
   const inc = historyData.find(i => i.id === histEditId);
   if (!confirm('Permanently delete ' + (inc?.incident_number || 'this incident') + '? This cannot be undone.')) return;
   // Delete log entries first to satisfy foreign key constraint
-  await db.from('incident_log').delete().eq('incident_id', histEditId);
-  const { error } = await db.from('incidents').delete().eq('id', histEditId);
+  await getDb().from('incident_log').delete().eq('incident_id', histEditId);
+  const { error } = await getDb().from('incidents').delete().eq('id', histEditId);
   if (error) { showAlert('Delete failed: ' + error.message, 'danger'); return; }
   historyData = historyData.filter(i => i.id !== histEditId);
   state.incidents = state.incidents.filter(i => i.id !== histEditId);
@@ -2458,6 +2888,197 @@ async function deleteHistoryIncident() {
   filterHistory();
   renderQueue();
   showAlert('Incident deleted.', 'success');
+}
+
+/* ════════════════════════════════════════════════
+   LIVE EDIT — ACTIVE INCIDENT (no reason required)
+════════════════════════════════════════════════ */
+function openLiveEdit() {
+  const inc = state.selectedIncident;
+  if (!inc) return;
+  const overlay = document.getElementById('live-edit-overlay');
+  const panel   = document.getElementById('live-edit-panel');
+  overlay.style.display = 'block';
+  panel.style.display = 'block';
+  document.getElementById('ledit-title').textContent = 'Edit — ' + (inc.incident_number || 'Incident');
+  document.getElementById('ledit-calltype').value = inc.call_type || '';
+  document.getElementById('ledit-priority').value = inc.priority || 3;
+  document.getElementById('ledit-location').value = inc.location_description || '';
+  document.getElementById('ledit-caller-name').value = inc.caller_name || '';
+  document.getElementById('ledit-caller-contact').value = inc.caller_contact || '';
+}
+
+function closeLiveEdit() {
+  document.getElementById('live-edit-overlay').style.display = 'none';
+  document.getElementById('live-edit-panel').style.display = 'none';
+}
+async function saveLiveEdit() {
+  if (!gateAction('liveEdit')) return;
+  const inc = state.selectedIncident;
+  if (!inc) return;
+  const callType = document.getElementById('ledit-calltype').value.trim();
+  const priority = parseInt(document.getElementById('ledit-priority').value);
+  const location = document.getElementById('ledit-location').value.trim();
+  const callerName = document.getElementById('ledit-caller-name').value.trim();
+  const callerContact = document.getElementById('ledit-caller-contact').value.trim();
+  const now = new Date().toISOString();
+
+  const changes = [];
+  if (callType !== inc.call_type) changes.push(`Call type: ${inc.call_type} → ${callType}`);
+  if (priority !== inc.priority) changes.push(`Priority: P${inc.priority} → P${priority}`);
+  if (location !== inc.location_description) changes.push(`Location: ${inc.location_description} → ${location}`);
+  if (callerName !== (inc.caller_name||'')) changes.push(`Caller: ${inc.caller_name||'—'} → ${callerName||'—'}`);
+
+  const { error } = await getDb().from('incidents').update({
+    call_type: callType, priority, location_description: location,
+    caller_name: callerName, caller_contact: callerContact,
+    last_edited_at: now, last_edited_by: state.session?.role === 'admin' ? 'ADMIN' : 'SOC'
+  }).eq('id', inc.id);
+  if (error) { showAlert('Save failed: ' + error.message, 'danger'); return; }
+
+  if (changes.length) {
+    const editEntry = {
+      incident_id: inc.id,
+      entry_text: '[EDIT] ' + changes.join('; '),
+      entered_by: state.session?.role === 'admin' ? 'ADMIN' : 'SOC',
+      entered_at: now
+    };
+    await getDb().from('incident_log').insert(editEntry);
+    upsertLocalLog(editEntry);
+  }
+
+  // Update state
+  inc.call_type = callType; inc.priority = priority;
+  inc.location_description = location; inc.caller_name = callerName;
+  inc.caller_contact = callerContact; inc.last_edited_at = now;
+
+  closeLiveEdit();
+  renderDetailPanel();
+  renderQueue();
+  showAlert('Incident updated.', 'success');
+}
+
+/* ════════════════════════════════════════════════
+   STATS
+════════════════════════════════════════════════ */
+function initStats() {
+  // Populate campus dropdown
+  const sel = document.getElementById('stats-campus');
+  if (sel) {
+    sel.innerHTML = '<option value="">All Campuses</option>';
+    state.campuses.forEach(c => { sel.innerHTML += `<option value="${c.id}">${escHtml(c.name)}</option>`; });
+  }
+  const typeSel = document.getElementById('stats-type');
+  if (typeSel) {
+    const prev = typeSel.value;
+    typeSel.innerHTML = '<option value="">All Types</option>';
+    [...new Set(CALL_TYPES_LIST.map(c => c.code))].sort().forEach(code => {
+      typeSel.innerHTML += `<option value="${code}">${escHtml(code)}</option>`;
+    });
+    if (prev) typeSel.value = prev;
+  }
+  // Set default date range: last 30 days
+  const toDate = new Date(); const fromDate = new Date(toDate - 30*24*60*60*1000);
+  const fmt = d => d.toISOString().slice(0,10);
+  const fromEl = document.getElementById('stats-from');
+  const toEl   = document.getElementById('stats-to');
+  if (fromEl && !fromEl.value) fromEl.value = fmt(fromDate);
+  if (toEl   && !toEl.value)   toEl.value   = fmt(toDate);
+  renderStats();
+}
+
+async function renderStats() {
+  const fromVal = document.getElementById('stats-from')?.value;
+  const toVal   = document.getElementById('stats-to')?.value;
+  const campusId = document.getElementById('stats-campus')?.value;
+  const typeVal = document.getElementById('stats-type')?.value;
+  const out = document.getElementById('stats-output');
+  if (!out) return;
+  out.innerHTML = '<div style="color:var(--cad-muted);font-size:11px;">Loading...</div>';
+
+  let data = [];
+  if (getDb()) {
+    let query = getDb().from('incidents').select('priority,call_type,status,campus_id,created_at');
+    if (fromVal) query = query.gte('created_at', fromVal + 'T00:00:00');
+    if (toVal)   query = query.lte('created_at', toVal   + 'T23:59:59');
+    if (campusId) query = query.eq('campus_id', parseInt(campusId));
+    if (typeVal) query = query.eq('call_type', typeVal);
+    const result = await query;
+    if (result.error) { out.innerHTML = `<div style="color:var(--cad-p1);font-size:11px;">Error: ${escHtml(result.error.message)}</div>`; return; }
+    data = result.data || [];
+  } else {
+    data = state.incidents.filter(i => {
+      const created = new Date(i.created_at);
+      const afterFrom = !fromVal || created >= new Date(fromVal + 'T00:00:00');
+      const beforeTo = !toVal || created <= new Date(toVal + 'T23:59:59');
+      const campusOk = !campusId || String(i.campus_id) === String(campusId);
+      const typeOk = !typeVal || i.call_type === typeVal;
+      return afterFrom && beforeTo && campusOk && typeOk;
+    });
+  }
+  if (!data || !data.length) { out.innerHTML = '<div style="color:var(--cad-muted);font-size:11px;padding:8px 0;">No incidents found for the selected filters.</div>'; return; }
+
+  // Totals
+  const total = data.length;
+  const active = data.filter(i=>i.status==='active').length;
+  const closed = data.filter(i=>i.status==='closed').length;
+
+  // By priority
+  const byPri = {1:0,2:0,3:0,4:0};
+  data.forEach(i => { byPri[i.priority] = (byPri[i.priority]||0)+1; });
+
+  // By call type top 10
+  const byType = {};
+  data.forEach(i => { const t=i.call_type||'Unknown'; byType[t]=(byType[t]||0)+1; });
+  const topTypes = Object.entries(byType).sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+  // By campus
+  const byCampus = {};
+  data.forEach(i => {
+    const c = state.campuses.find(c=>c.id===i.campus_id);
+    const name = c ? c.name : 'Unknown';
+    byCampus[name] = (byCampus[name]||0)+1;
+  });
+
+  out.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">
+      <div style="background:#1a2030;border:1px solid var(--cad-border);border-radius:3px;padding:8px;text-align:center;">
+        <div style="font-size:22px;font-weight:700;color:var(--cad-accent);">${total}</div>
+        <div style="font-size:10px;color:var(--cad-muted);text-transform:uppercase;">Total</div>
+      </div>
+      <div style="background:#1a2030;border:1px solid var(--cad-border);border-radius:3px;padding:8px;text-align:center;">
+        <div style="font-size:22px;font-weight:700;color:var(--cad-p1);">${active}</div>
+        <div style="font-size:10px;color:var(--cad-muted);text-transform:uppercase;">Active</div>
+      </div>
+      <div style="background:#1a2030;border:1px solid var(--cad-border);border-radius:3px;padding:8px;text-align:center;">
+        <div style="font-size:22px;font-weight:700;color:#4ade80;">${closed}</div>
+        <div style="font-size:10px;color:var(--cad-muted);text-transform:uppercase;">Closed</div>
+      </div>
+    </div>
+    <div class="divider-label">By Priority</div>
+    <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px;">
+      ${[1,2,3,4].map(p=>`<tr style="border-bottom:1px solid var(--cad-border);">
+        <td style="padding:3px 6px;color:var(--cad-p${p}==4?'var(--cad-muted)':'var(--cad-p'+p+')');font-weight:700;">P${p}</td>
+        <td style="padding:3px 6px;color:var(--cad-muted);">${{1:'Critical',2:'Urgent',3:'Routine',4:'Admin'}[p]}</td>
+        <td style="padding:3px 6px;text-align:right;font-weight:700;color:var(--cad-text);">${byPri[p]||0}</td>
+      </tr>`).join('')}
+    </table>
+    <div class="divider-label">Top Incident Types</div>
+    <table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px;">
+      ${topTypes.map(([type,cnt])=>`<tr style="border-bottom:1px solid var(--cad-border);">
+        <td style="padding:3px 6px;font-family:'Courier New',monospace;color:var(--cad-accent);">${escHtml(type)}</td>
+        <td style="padding:3px 6px;text-align:right;font-weight:700;color:var(--cad-text);">${cnt}</td>
+      </tr>`).join('')}
+    </table>
+    ${Object.keys(byCampus).length>1?`
+    <div class="divider-label">By Campus</div>
+    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+      ${Object.entries(byCampus).sort((a,b)=>b[1]-a[1]).map(([name,cnt])=>`<tr style="border-bottom:1px solid var(--cad-border);">
+        <td style="padding:3px 6px;color:var(--cad-muted);">${escHtml(name)}</td>
+        <td style="padding:3px 6px;text-align:right;font-weight:700;color:var(--cad-text);">${cnt}</td>
+      </tr>`).join('')}
+    </table>`:''}
+  `;
 }
 
 function updateStats() {
@@ -2512,7 +3133,7 @@ document.addEventListener('keydown', e => {
 /* ══════════════════════════════════
    BOOT
 ══════════════════════════════════ */
-boot();
+runtimeConfigReady.then(() => boot());
 </script>
 
 
@@ -2565,6 +3186,83 @@ boot();
     <button class="cad-btn-primary" style="padding:5px 14px; margin-left:auto;" onclick="saveHistEdit()">
       <i class="bi bi-check-lg me-1"></i>Save Changes
     </button>
+  </div>
+</div>
+
+<!-- LIVE EDIT OVERLAY -->
+<div id="live-edit-overlay" onclick="closeLiveEdit()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9989;"></div>
+
+<!-- LIVE EDIT POPOUT -->
+<div id="live-edit-panel" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);width:480px;background:var(--cad-panel);border:1px solid #0a1e30;border-top:3px solid var(--cad-accent);border-radius:4px;z-index:9990;box-shadow:0 8px 32px rgba(0,0,0,0.7);overflow:hidden;">
+  <div class="hedit-header">
+    <i class="bi bi-pencil-square"></i>
+    <span id="ledit-title">Edit Incident</span>
+    <button onclick="closeLiveEdit()" style="margin-left:auto;background:none;border:none;color:#aac8e8;font-size:16px;cursor:pointer;"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <div class="hedit-body">
+    <div class="hedit-field">
+      <label class="cad-label">Call Type</label>
+      <input type="text" class="hedit-input" id="ledit-calltype" />
+    </div>
+    <div class="hedit-field">
+      <label class="cad-label">Priority</label>
+      <select class="hedit-input" id="ledit-priority">
+        <option value="1">P1 — Critical</option>
+        <option value="2">P2 — Urgent</option>
+        <option value="3">P3 — Routine</option>
+        <option value="4">P4 — Admin</option>
+      </select>
+    </div>
+    <div class="hedit-field">
+      <label class="cad-label">Location / Description</label>
+      <input type="text" class="hedit-input" id="ledit-location" />
+    </div>
+    <div class="hedit-field">
+      <label class="cad-label">Caller Name</label>
+      <input type="text" class="hedit-input" id="ledit-caller-name" />
+    </div>
+    <div class="hedit-field">
+      <label class="cad-label">Caller Contact</label>
+      <input type="text" class="hedit-input" id="ledit-caller-contact" />
+    </div>
+  </div>
+  <div class="hedit-footer">
+    <button class="cad-btn-secondary" style="padding:5px 12px;" onclick="closeLiveEdit()">Cancel</button>
+    <button class="cad-btn-primary" style="padding:5px 14px; margin-left:auto;" onclick="saveLiveEdit()"><i class="bi bi-check-lg me-1"></i>Save Changes</button>
+  </div>
+</div>
+
+<div class="modal fade" id="setupConfigModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content cad-modal-content">
+      <div class="cad-modal-header">
+        <span class="cad-modal-title"><i class="bi bi-shield-lock me-2"></i>Secure Setup</span>
+        <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" style="padding:14px;">
+        <div style="font-size:11px;color:var(--cad-muted);margin-bottom:12px;">Supabase URL, anon key, and admin credentials are stored encrypted in this browser only. For a static frontend, true secret hiding still depends on Supabase RLS and any future proxy/server work.</div>
+        <label class="cad-label">Supabase URL</label>
+        <input type="text" class="cad-input" id="setup-supabase-url" placeholder="https://your-project.supabase.co" />
+        <label class="cad-label">Supabase Anon Key</label>
+        <textarea class="cad-input" id="setup-supabase-anon" rows="3" placeholder="Paste the anon key here"></textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label class="cad-label">Admin Username</label>
+            <input type="text" class="cad-input" id="setup-admin-username" />
+          </div>
+          <div>
+            <label class="cad-label">Admin Password</label>
+            <input type="password" class="cad-input" id="setup-admin-password" />
+          </div>
+        </div>
+        <div id="setup-config-status" style="font-size:11px;min-height:16px;color:var(--cad-muted);"></div>
+      </div>
+      <div class="modal-footer" style="background:var(--cad-header); border-top:1px solid var(--cad-border); padding:10px 14px; gap:8px;">
+        <button class="cad-btn-danger" onclick="clearRuntimeConfig()"><i class="bi bi-trash me-1"></i>Clear Saved Setup</button>
+        <button class="cad-btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button class="cad-btn-primary" onclick="saveRuntimeConfig()"><i class="bi bi-check-lg me-1"></i>Save Secure Setup</button>
+      </div>
+    </div>
   </div>
 </div>
 
