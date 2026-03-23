@@ -1005,6 +1005,8 @@
       font-family: 'Courier New', monospace;
     }
     .ct-selected-badge.show { display: block; }
+    #setupConfigModal { z-index: 10020 !important; }
+    #setup-modal-backdrop { z-index: 10019 !important; }
   </style>
 </head>
 <body>
@@ -1477,6 +1479,7 @@ function forceShowSetupModal() {
   const modal = document.getElementById('setupConfigModal');
   if (!modal) return;
   modal.style.display = 'block';
+  modal.style.zIndex = '10020';
   modal.classList.add('show');
   modal.removeAttribute('aria-hidden');
   modal.setAttribute('aria-modal', 'true');
@@ -1486,6 +1489,7 @@ function forceShowSetupModal() {
     backdrop = document.createElement('div');
     backdrop.id = 'setup-modal-backdrop';
     backdrop.className = 'modal-backdrop fade show';
+    backdrop.style.zIndex = '10019';
     backdrop.onclick = closeSetupConfig;
     document.body.appendChild(backdrop);
   }
@@ -1511,6 +1515,7 @@ function closeSetupConfig() {
 function openSetupConfig() {
   const modal = document.getElementById('setupConfigModal');
   if (!modal) return;
+  modal.style.zIndex = '10020';
   const supUrlEl = document.getElementById('setup-supabase-url');
   const supAnonEl = document.getElementById('setup-supabase-anon');
   const adminUserEl = document.getElementById('setup-admin-username');
@@ -1524,6 +1529,9 @@ function openSetupConfig() {
   try {
     if (window.bootstrap && bootstrap.Modal) {
       bootstrap.Modal.getOrCreateInstance(modal).show();
+      setTimeout(() => {
+        document.querySelectorAll('.modal-backdrop').forEach(b => { b.style.zIndex = '10019'; });
+      }, 0);
     } else {
       forceShowSetupModal();
     }
